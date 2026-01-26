@@ -1,0 +1,27 @@
+{
+  "name": "pq-jws",
+  "version": "0.0.1",
+  "description": "Post-quantum JSON Web Signature",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "post-quantum",
+    "cryptography",
+    "jws",
+    "json-web-signature",
+    "pqc"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

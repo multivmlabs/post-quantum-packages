@@ -1,0 +1,11 @@
+[package]
+name = "pq-eth-signer"
+version = "0.0.1"
+edition = "2021"
+description = "Ethereum transaction signing with PQ"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

@@ -1,0 +1,11 @@
+[package]
+name = "pq-jws"
+version = "0.0.1"
+edition = "2021"
+description = "Post-quantum JSON Web Signature"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "jws", "json-web-signature", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

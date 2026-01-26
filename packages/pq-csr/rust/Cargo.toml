@@ -1,0 +1,11 @@
+[package]
+name = "pq-csr"
+version = "0.0.1"
+edition = "2021"
+description = "Post-quantum Certificate Signing Request"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "csr", "certificate", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

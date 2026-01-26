@@ -1,0 +1,27 @@
+{
+  "name": "pq-csr",
+  "version": "0.0.1",
+  "description": "Post-quantum Certificate Signing Request",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "post-quantum",
+    "cryptography",
+    "csr",
+    "certificate-signing-request",
+    "pqc"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,362 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "post-quantum-packages",
+    },
+    "packages/pq-algorithm-id/ts": {
+      "name": "pq-algorithm-id",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-bitcoin-taproot/ts": {
+      "name": "pq-bitcoin-taproot",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-cert-parse/ts": {
+      "name": "pq-cert-parse",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-cert-verify/ts": {
+      "name": "pq-cert-verify",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-cms/ts": {
+      "name": "pq-cms",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-cose/ts": {
+      "name": "pq-cose",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-csr/ts": {
+      "name": "pq-csr",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-dkim/ts": {
+      "name": "pq-dkim",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-dtls/ts": {
+      "name": "pq-dtls",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-ecies/ts": {
+      "name": "pq-ecies",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-eth-signer/ts": {
+      "name": "pq-eth-signer",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-fido2/ts": {
+      "name": "pq-fido2",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-hpke/ts": {
+      "name": "pq-hpke",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-jwe/ts": {
+      "name": "pq-jwe",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-jwk/ts": {
+      "name": "pq-jwk",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-jws/ts": {
+      "name": "pq-jws",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-jwt-verify/ts": {
+      "name": "pq-jwt-verify",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-kem-combiner/ts": {
+      "name": "pq-kem-combiner",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-kerberos/ts": {
+      "name": "pq-kerberos",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-key-encoder/ts": {
+      "name": "pq-key-encoder",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-key-fingerprint/ts": {
+      "name": "pq-key-fingerprint",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-key-strength/ts": {
+      "name": "pq-key-strength",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-noise/ts": {
+      "name": "pq-noise",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-oid/ts": {
+      "name": "pq-oid",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-pkcs7/ts": {
+      "name": "pq-pkcs7",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-pkcs8/ts": {
+      "name": "pq-pkcs8",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-quic-crypto/ts": {
+      "name": "pq-quic-crypto",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-rng/ts": {
+      "name": "pq-rng",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-side-channel/ts": {
+      "name": "pq-side-channel",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-size-calculator/ts": {
+      "name": "pq-size-calculator",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-solana-signer/ts": {
+      "name": "pq-solana-signer",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-spki/ts": {
+      "name": "pq-spki",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-ssh-agent/ts": {
+      "name": "pq-ssh-agent",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-test-vectors/ts": {
+      "name": "pq-test-vectors",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-tls-client/ts": {
+      "name": "pq-tls-client",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-wasm/ts": {
+      "name": "pq-wasm",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-webauthn/ts": {
+      "name": "pq-webauthn",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-worker/ts": {
+      "name": "pq-worker",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/pq-xmldsig/ts": {
+      "name": "pq-xmldsig",
+      "version": "0.0.1",
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+  },
+  "packages": {
+    "pq-algorithm-id": ["pq-algorithm-id@workspace:packages/pq-algorithm-id/ts"],
+
+    "pq-bitcoin-taproot": ["pq-bitcoin-taproot@workspace:packages/pq-bitcoin-taproot/ts"],
+
+    "pq-cert-parse": ["pq-cert-parse@workspace:packages/pq-cert-parse/ts"],
+
+    "pq-cert-verify": ["pq-cert-verify@workspace:packages/pq-cert-verify/ts"],
+
+    "pq-cms": ["pq-cms@workspace:packages/pq-cms/ts"],
+
+    "pq-cose": ["pq-cose@workspace:packages/pq-cose/ts"],
+
+    "pq-csr": ["pq-csr@workspace:packages/pq-csr/ts"],
+
+    "pq-dkim": ["pq-dkim@workspace:packages/pq-dkim/ts"],
+
+    "pq-dtls": ["pq-dtls@workspace:packages/pq-dtls/ts"],
+
+    "pq-ecies": ["pq-ecies@workspace:packages/pq-ecies/ts"],
+
+    "pq-eth-signer": ["pq-eth-signer@workspace:packages/pq-eth-signer/ts"],
+
+    "pq-fido2": ["pq-fido2@workspace:packages/pq-fido2/ts"],
+
+    "pq-hpke": ["pq-hpke@workspace:packages/pq-hpke/ts"],
+
+    "pq-jwe": ["pq-jwe@workspace:packages/pq-jwe/ts"],
+
+    "pq-jwk": ["pq-jwk@workspace:packages/pq-jwk/ts"],
+
+    "pq-jws": ["pq-jws@workspace:packages/pq-jws/ts"],
+
+    "pq-jwt-verify": ["pq-jwt-verify@workspace:packages/pq-jwt-verify/ts"],
+
+    "pq-kem-combiner": ["pq-kem-combiner@workspace:packages/pq-kem-combiner/ts"],
+
+    "pq-kerberos": ["pq-kerberos@workspace:packages/pq-kerberos/ts"],
+
+    "pq-key-encoder": ["pq-key-encoder@workspace:packages/pq-key-encoder/ts"],
+
+    "pq-key-fingerprint": ["pq-key-fingerprint@workspace:packages/pq-key-fingerprint/ts"],
+
+    "pq-key-strength": ["pq-key-strength@workspace:packages/pq-key-strength/ts"],
+
+    "pq-noise": ["pq-noise@workspace:packages/pq-noise/ts"],
+
+    "pq-oid": ["pq-oid@workspace:packages/pq-oid/ts"],
+
+    "pq-pkcs7": ["pq-pkcs7@workspace:packages/pq-pkcs7/ts"],
+
+    "pq-pkcs8": ["pq-pkcs8@workspace:packages/pq-pkcs8/ts"],
+
+    "pq-quic-crypto": ["pq-quic-crypto@workspace:packages/pq-quic-crypto/ts"],
+
+    "pq-rng": ["pq-rng@workspace:packages/pq-rng/ts"],
+
+    "pq-side-channel": ["pq-side-channel@workspace:packages/pq-side-channel/ts"],
+
+    "pq-size-calculator": ["pq-size-calculator@workspace:packages/pq-size-calculator/ts"],
+
+    "pq-solana-signer": ["pq-solana-signer@workspace:packages/pq-solana-signer/ts"],
+
+    "pq-spki": ["pq-spki@workspace:packages/pq-spki/ts"],
+
+    "pq-ssh-agent": ["pq-ssh-agent@workspace:packages/pq-ssh-agent/ts"],
+
+    "pq-test-vectors": ["pq-test-vectors@workspace:packages/pq-test-vectors/ts"],
+
+    "pq-tls-client": ["pq-tls-client@workspace:packages/pq-tls-client/ts"],
+
+    "pq-wasm": ["pq-wasm@workspace:packages/pq-wasm/ts"],
+
+    "pq-webauthn": ["pq-webauthn@workspace:packages/pq-webauthn/ts"],
+
+    "pq-worker": ["pq-worker@workspace:packages/pq-worker/ts"],
+
+    "pq-xmldsig": ["pq-xmldsig@workspace:packages/pq-xmldsig/ts"],
+
+    "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+  }
+}

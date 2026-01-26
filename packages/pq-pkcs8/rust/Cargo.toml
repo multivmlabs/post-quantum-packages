@@ -1,0 +1,11 @@
+[package]
+name = "pq-pkcs8"
+version = "0.0.1"
+edition = "2021"
+description = "PKCS#8 private key encoding for PQ"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

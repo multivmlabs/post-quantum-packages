@@ -1,0 +1,11 @@
+[package]
+name = "pq-key-fingerprint"
+version = "0.0.1"
+edition = "2021"
+description = "Generate fingerprints/hashes of PQ public keys"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

@@ -1,0 +1,11 @@
+[package]
+name = "pq-algorithm-id"
+version = "0.0.1"
+edition = "2021"
+description = "Algorithm identifier mappings (JOSE, COSE, X.509)"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

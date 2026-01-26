@@ -1,0 +1,7 @@
+{
+  "name": "post-quantum-packages",
+  "private": true,
+  "workspaces": [
+    "packages/*/ts"
+  ]
+}

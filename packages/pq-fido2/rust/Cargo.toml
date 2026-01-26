@@ -1,0 +1,11 @@
+[package]
+name = "pq-fido2"
+version = "0.0.1"
+edition = "2021"
+description = "FIDO2/CTAP2 with PQ support"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

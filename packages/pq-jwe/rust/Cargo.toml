@@ -1,0 +1,11 @@
+[package]
+name = "pq-jwe"
+version = "0.0.1"
+edition = "2021"
+description = "JWE encrypt/decrypt with ML-KEM"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

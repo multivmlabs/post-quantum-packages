@@ -1,0 +1,25 @@
+{
+  "name": "pq-fido2",
+  "version": "0.0.1",
+  "description": "FIDO2/CTAP2 with PQ support",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "post-quantum",
+    "cryptography",
+    "pqc"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

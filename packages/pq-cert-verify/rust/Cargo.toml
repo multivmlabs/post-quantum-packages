@@ -1,0 +1,11 @@
+[package]
+name = "pq-cert-verify"
+version = "0.0.1"
+edition = "2021"
+description = "Verify PQ X.509 certificate chains"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

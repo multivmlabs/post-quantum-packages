@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pq-size-calculator"
+version = "0.0.1"
+description = "Calculate signature/ciphertext/key sizes for each algorithm"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8"
+keywords = ["post-quantum", "cryptography", "pqc"]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security :: Cryptography",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pq_size_calculator"]

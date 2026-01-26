@@ -1,0 +1,11 @@
+[package]
+name = "pq-bitcoin-taproot"
+version = "0.0.1"
+edition = "2021"
+description = "Taproot-compatible PQ signatures"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

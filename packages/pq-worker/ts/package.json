@@ -1,0 +1,25 @@
+{
+  "name": "pq-worker",
+  "version": "0.0.1",
+  "description": "Web Worker wrapper for non-blocking PQ operations",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "post-quantum",
+    "cryptography",
+    "pqc"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

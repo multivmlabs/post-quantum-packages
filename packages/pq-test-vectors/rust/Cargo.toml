@@ -1,0 +1,11 @@
+[package]
+name = "pq-test-vectors"
+version = "0.0.1"
+edition = "2021"
+description = "NIST test vectors as importable fixtures"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

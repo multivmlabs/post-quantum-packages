@@ -1,0 +1,11 @@
+[package]
+name = "pq-oid"
+version = "0.0.1"
+edition = "2021"
+description = "OID constants for all PQ algorithms (ML-KEM, ML-DSA, SLH-DSA)"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

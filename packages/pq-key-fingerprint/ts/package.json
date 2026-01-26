@@ -1,0 +1,25 @@
+{
+  "name": "pq-key-fingerprint",
+  "version": "0.0.1",
+  "description": "Generate fingerprints/hashes of PQ public keys",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "post-quantum",
+    "cryptography",
+    "pqc"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

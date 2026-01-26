@@ -1,0 +1,11 @@
+[package]
+name = "pq-jwt-verify"
+version = "0.0.1"
+edition = "2021"
+description = "Verify-only JWT library (smaller bundle)"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

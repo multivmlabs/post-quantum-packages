@@ -1,0 +1,11 @@
+[package]
+name = "pq-worker"
+version = "0.0.1"
+edition = "2021"
+description = "Web Worker wrapper for non-blocking PQ operations"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

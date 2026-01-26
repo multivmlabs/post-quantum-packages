@@ -1,0 +1,19 @@
+# Node
+node_modules/
+dist/
+package-lock.json
+bun.lockb
+
+# Rust
+target/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp

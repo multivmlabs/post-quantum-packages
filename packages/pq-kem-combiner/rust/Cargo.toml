@@ -1,0 +1,11 @@
+[package]
+name = "pq-kem-combiner"
+version = "0.0.1"
+edition = "2021"
+description = "Securely combine multiple KEMs"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]

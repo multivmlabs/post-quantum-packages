@@ -1,0 +1,11 @@
+[package]
+name = "pq-key-encoder"
+version = "0.0.1"
+edition = "2021"
+description = "Post-quantum key encoding utilities"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "key-encoding", "pqc"]
+categories = ["cryptography"]
+
+[dependencies]
