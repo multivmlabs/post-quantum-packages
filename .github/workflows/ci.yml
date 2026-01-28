@@ -1,0 +1,197 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      ts-packages: ${{ steps.changes.outputs.ts-packages }}
+      rust-packages: ${{ steps.changes.outputs.rust-packages }}
+      python-packages: ${{ steps.changes.outputs.python-packages }}
+      has-ts: ${{ steps.changes.outputs.has-ts }}
+      has-rust: ${{ steps.changes.outputs.has-rust }}
+      has-python: ${{ steps.changes.outputs.has-python }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed packages
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            # On push to main, compare with previous commit
+            BASE_SHA="${{ github.event.before }}"
+          else
+            # On PR, compare with base branch
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          fi
+
+          # Get changed files
+          CHANGED_FILES=$(git diff --name-only "$BASE_SHA" HEAD 2>/dev/null || echo "")
+
+          # If we can't get diff (e.g., initial commit), run all
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "Could not determine changed files, will run all tests"
+            TS_PACKAGES=$(ls -d packages/*/ts 2>/dev/null | xargs -I{} dirname {} | xargs -I{} basename {} | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            RUST_PACKAGES=$(ls -d packages/*/rust 2>/dev/null | xargs -I{} dirname {} | xargs -I{} basename {} | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            PYTHON_PACKAGES=$(ls -d packages/*/python 2>/dev/null | xargs -I{} dirname {} | xargs -I{} basename {} | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          else
+            # Extract unique package names for each language
+            TS_PACKAGES=$(echo "$CHANGED_FILES" | grep -E '^packages/[^/]+/ts/' | sed 's|packages/\([^/]*\)/ts/.*|\1|' | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            RUST_PACKAGES=$(echo "$CHANGED_FILES" | grep -E '^packages/[^/]+/rust/' | sed 's|packages/\([^/]*\)/rust/.*|\1|' | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            PYTHON_PACKAGES=$(echo "$CHANGED_FILES" | grep -E '^packages/[^/]+/python/' | sed 's|packages/\([^/]*\)/python/.*|\1|' | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          fi
+
+          echo "ts-packages=$TS_PACKAGES" >> $GITHUB_OUTPUT
+          echo "rust-packages=$RUST_PACKAGES" >> $GITHUB_OUTPUT
+          echo "python-packages=$PYTHON_PACKAGES" >> $GITHUB_OUTPUT
+
+          # Set boolean flags for whether each language has changes
+          echo "has-ts=$( [ "$TS_PACKAGES" != "[]" ] && echo true || echo false )" >> $GITHUB_OUTPUT
+          echo "has-rust=$( [ "$RUST_PACKAGES" != "[]" ] && echo true || echo false )" >> $GITHUB_OUTPUT
+          echo "has-python=$( [ "$PYTHON_PACKAGES" != "[]" ] && echo true || echo false )" >> $GITHUB_OUTPUT
+
+          echo "TypeScript packages: $TS_PACKAGES"
+          echo "Rust packages: $RUST_PACKAGES"
+          echo "Python packages: $PYTHON_PACKAGES"
+
+  test-typescript:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-ts == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: [18, 20, 22]
+        package: ${{ fromJson(needs.detect-changes.outputs.ts-packages) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: packages/${{ matrix.package }}/ts
+        run: npm ci
+
+      - name: Build
+        working-directory: packages/${{ matrix.package }}/ts
+        run: npm run build --if-present
+
+      - name: Test
+        working-directory: packages/${{ matrix.package }}/ts
+        run: npm test --if-present
+
+  test-rust:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-rust == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        toolchain: [stable, beta, '1.75']
+        package: ${{ fromJson(needs.detect-changes.outputs.rust-packages) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust ${{ matrix.toolchain }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/
+            ~/.cargo/git/
+            target/
+          key: cargo-${{ runner.os }}-${{ matrix.toolchain }}-${{ matrix.package }}-${{ hashFiles(format('packages/{0}/rust/Cargo.toml', matrix.package)) }}
+          restore-keys: |
+            cargo-${{ runner.os }}-${{ matrix.toolchain }}-${{ matrix.package }}-
+            cargo-${{ runner.os }}-${{ matrix.toolchain }}-
+
+      - name: Check formatting
+        working-directory: packages/${{ matrix.package }}/rust
+        run: cargo fmt -- --check
+
+      - name: Clippy
+        working-directory: packages/${{ matrix.package }}/rust
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Build
+        working-directory: packages/${{ matrix.package }}/rust
+        run: cargo build --all-targets
+
+      - name: Test
+        working-directory: packages/${{ matrix.package }}/rust
+        run: cargo test
+
+  test-python:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-python == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        package: ${{ fromJson(needs.detect-changes.outputs.python-packages) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pytest pytest-cov build
+
+      - name: Install package
+        working-directory: packages/${{ matrix.package }}/python
+        run: pip install -e .
+
+      - name: Lint with ruff
+        working-directory: packages/${{ matrix.package }}/python
+        run: ruff check .
+
+      - name: Test with pytest
+        working-directory: packages/${{ matrix.package }}/python
+        run: |
+          if [ -d "tests" ]; then
+            pytest tests -v
+          else
+            echo "No tests directory found, skipping"
+          fi
+
+  ci-success:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, test-typescript, test-rust, test-python]
+    if: always()
+    steps:
+      - name: Check CI status
+        run: |
+          if [[ "${{ needs.test-typescript.result }}" == "failure" ]] || \
+             [[ "${{ needs.test-rust.result }}" == "failure" ]] || \
+             [[ "${{ needs.test-python.result }}" == "failure" ]]; then
+            echo "One or more test jobs failed"
+            exit 1
+          fi
+          echo "All required checks passed"
