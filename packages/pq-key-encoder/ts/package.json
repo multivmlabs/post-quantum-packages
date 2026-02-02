@@ -9,8 +9,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "build": "tsc -b",
+    "prepublishOnly": "npm run build",
+    "test": "bun test"
   },
   "keywords": [
     "post-quantum",
@@ -20,6 +21,9 @@
   ],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "pq-oid": "0.0.1"
+  },
   "devDependencies": {
     "typescript": "^5.0.0"
   }

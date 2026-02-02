@@ -1,6 +1,7 @@
 # Node
 node_modules/
 dist/
+*.tsbuildinfo
 package-lock.json
 bun.lockb
 
