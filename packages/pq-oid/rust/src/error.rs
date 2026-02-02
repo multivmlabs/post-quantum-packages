@@ -1,32 +1,38 @@
 //! Error types for pq-oid.
 
-use thiserror::Error;
+use std::fmt;
 
-#[derive(Debug, Error, Clone, PartialEq, Eq)]
+/// Error type for pq-oid operations.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
-    #[error("Unknown algorithm: {0}")]
+    /// Unknown algorithm name.
     UnknownAlgorithm(String),
-
-    #[error("Unknown OID: {0}")]
+    /// Unknown OID string.
     UnknownOid(String),
-
-    #[error("Invalid OID: {0}")]
+    /// Invalid OID format.
     InvalidOid(String),
-
-    #[error("Invalid OID bytes: {0}")]
+    /// Invalid OID bytes.
     InvalidOidBytes(String),
-
-    #[error("Unknown JOSE algorithm: {0}")]
+    /// Unknown JOSE algorithm identifier.
     UnknownJoseAlgorithm(String),
-
-    #[error("Algorithm '{0}' is not supported in JOSE")]
-    UnsupportedJoseAlgorithm(String),
-
-    #[error("Unknown COSE algorithm number: {0}")]
+    /// Unknown COSE algorithm number.
     UnknownCoseAlgorithm(i32),
-
-    #[error("Algorithm '{0}' is not supported in COSE")]
-    UnsupportedCoseAlgorithm(String),
 }
 
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::UnknownAlgorithm(s) => write!(f, "unknown algorithm: {}", s),
+            Error::UnknownOid(s) => write!(f, "unknown OID: {}", s),
+            Error::InvalidOid(s) => write!(f, "invalid OID: {}", s),
+            Error::InvalidOidBytes(s) => write!(f, "invalid OID bytes: {}", s),
+            Error::UnknownJoseAlgorithm(s) => write!(f, "unknown JOSE algorithm: {}", s),
+            Error::UnknownCoseAlgorithm(n) => write!(f, "unknown COSE algorithm: {}", n),
+        }
+    }
+}
+
+impl std::error::Error for Error {}
+
+/// Result type for pq-oid operations.
 pub type Result<T> = std::result::Result<T, Error>;

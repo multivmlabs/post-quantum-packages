@@ -9,6 +9,5 @@ keywords = ["post-quantum", "cryptography", "pqc"]
 categories = ["cryptography"]
 
 [dependencies]
-thiserror = "1"
 
 [dev-dependencies]

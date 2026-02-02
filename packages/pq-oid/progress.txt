@@ -1,0 +1,202 @@
+# pq-oid Implementation Progress
+
+## Progress Log
+
+---
+
+### Task 1: Setup Project Structure - DONE
+- Created `tests/` directory
+- Added `tests/.gitkeep` to track empty directory
+- Created `tests/setup.test.ts` with basic test to verify bun test runner works
+- Added `test` script to package.json: `"test": "bun test"`
+- Structure verified: tests directory exists and test file is in place
+
+### Task 2: Create Type Definitions - DONE
+- Created `src/types.ts` with all type definitions:
+  - `AlgorithmType`: 'kem' | 'sign'
+  - `AlgorithmFamily`: 'ML-KEM' | 'ML-DSA' | 'SLH-DSA'
+  - `MLKEMAlgorithm`: 3 variants (ML-KEM-512, ML-KEM-768, ML-KEM-1024)
+  - `MLDSAAlgorithm`: 3 variants (ML-DSA-44, ML-DSA-65, ML-DSA-87)
+  - `SLHDSAAlgorithm`: 12 variants (SHA2 and SHAKE for 128s/f, 192s/f, 256s/f)
+  - `AlgorithmName`: Union of all algorithm types
+  - `AlgorithmInfo`: Interface with name, oid, type, family, securityLevel, publicKeySize, privateKeySize, signatureSize?, ciphertextSize?
+- File located at `src/types.ts`
+
+### Task 3: Write OID Tests (TDD - RED) - DONE
+- Created `tests/oid.test.ts` with comprehensive tests for OID constants and lookup functions
+- Tests cover all 18 algorithm OIDs:
+  - ML-KEM: 512, 768, 1024 (3 variants)
+  - ML-DSA: 44, 65, 87 (3 variants)
+  - SLH-DSA-SHA2: 128s/f, 192s/f, 256s/f (6 variants)
+  - SLH-DSA-SHAKE: 128s/f, 192s/f, 256s/f (6 variants)
+- Test cases include:
+  - Individual OID constant tests for each algorithm
+  - `fromName()` returns correct OID for each algorithm
+  - `toName()` returns correct name for each OID
+  - `fromName()` throws for unknown algorithm
+  - `toName()` throws for unknown OID
+- Tests will FAIL (RED phase) because `src/oid.ts` implementation doesn't exist yet
+
+### Task 4: Implement OID Constants (TDD - GREEN) - DONE
+- Created `src/oid.ts` with all OID constants and lookup functions
+- Exported 18 OID constants:
+  - ML-KEM: ML_KEM_512, ML_KEM_768, ML_KEM_1024
+  - ML-DSA: ML_DSA_44, ML_DSA_65, ML_DSA_87
+  - SLH-DSA-SHA2: SLH_DSA_SHA2_128s/f, SLH_DSA_SHA2_192s/f, SLH_DSA_SHA2_256s/f
+  - SLH-DSA-SHAKE: SLH_DSA_SHAKE_128s/f, SLH_DSA_SHAKE_192s/f, SLH_DSA_SHAKE_256s/f
+- Exported `NAME_TO_OID` map (AlgorithmName -> OID string)
+- Exported `OID_TO_NAME` map (OID string -> AlgorithmName)
+- Implemented `fromName(name: AlgorithmName): string` - throws for unknown algorithm
+- Implemented `toName(oid: string): AlgorithmName` - throws for unknown OID
+- All tests in `tests/oid.test.ts` should now pass (GREEN phase)
+
+### Task 5: Write Algorithm Metadata Tests (TDD - RED) - DONE
+- Created `tests/algorithm.test.ts` with comprehensive tests for Algorithm metadata functions
+- Test coverage includes:
+  - `Algorithm.get()` tests for all 18 algorithms:
+    - ML-KEM-512, ML-KEM-768, ML-KEM-1024 (KEM algorithms with ciphertextSize)
+    - ML-DSA-44, ML-DSA-65, ML-DSA-87 (signature algorithms)
+    - SLH-DSA-SHA2-128s/f, 192s/f, 256s/f (6 variants)
+    - SLH-DSA-SHAKE-128s/f, 192s/f, 256s/f (6 variants)
+  - Each test verifies: name, oid, type, family, securityLevel, publicKeySize, privateKeySize, signatureSize/ciphertextSize
+  - `Algorithm.get()` throws for unknown algorithm
+  - `Algorithm.list()` returns all 18 algorithms
+  - `Algorithm.listByType('kem')` returns 3 ML-KEM variants
+  - `Algorithm.listByType('sign')` returns 15 signature algorithms
+  - `Algorithm.listByFamily('ML-KEM')` returns 3 variants
+  - `Algorithm.listByFamily('ML-DSA')` returns 3 variants
+  - `Algorithm.listByFamily('SLH-DSA')` returns 12 variants
+- Tests will FAIL (RED phase) because `src/algorithm.ts` implementation doesn't exist yet
+
+### Task 6: Implement Algorithm Metadata (TDD - GREEN) - DONE
+- Created `src/algorithm.ts` with ALGORITHM_INFO map and Algorithm object
+- ALGORITHM_INFO map contains metadata for all 18 algorithms:
+  - ML-KEM-512, ML-KEM-768, ML-KEM-1024 (KEM algorithms with ciphertextSize)
+  - ML-DSA-44, ML-DSA-65, ML-DSA-87 (signature algorithms with signatureSize)
+  - SLH-DSA-SHA2-128s/f, 192s/f, 256s/f (6 signature variants)
+  - SLH-DSA-SHAKE-128s/f, 192s/f, 256s/f (6 signature variants)
+- Each algorithm entry includes: name, oid, type, family, securityLevel, publicKeySize, privateKeySize, and signatureSize or ciphertextSize
+- Implemented Algorithm object with:
+  - `get(name: AlgorithmName): AlgorithmInfo` - throws for unknown algorithm
+  - `list(): AlgorithmName[]` - returns all 18 algorithms
+  - `listByType(type: AlgorithmType): AlgorithmName[]` - filters by 'kem' or 'sign'
+  - `listByFamily(family: AlgorithmFamily): AlgorithmName[]` - filters by 'ML-KEM', 'ML-DSA', or 'SLH-DSA'
+- All tests in `tests/algorithm.test.ts` should now pass (GREEN phase)
+
+### Task 7: Write OID Encoding Tests (TDD - RED) - DONE
+- Created `tests/encoding.test.ts` with comprehensive tests for OID DER encoding/decoding
+- Test coverage includes:
+  - `encodeOid()` tests:
+    - Encodes ML-KEM-512 OID to correct DER bytes [0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x04, 0x01]
+    - Encodes ML-KEM-768, ML-KEM-1024, ML-DSA-44, ML-DSA-65, ML-DSA-87 correctly
+    - Throws for invalid OID format (empty string, non-numeric, too few arcs)
+    - Throws for invalid first arc (> 2)
+    - Throws for invalid second arc (> 39 when first arc is 0 or 1)
+  - `decodeOid()` tests:
+    - Decodes ML-KEM-512 bytes to correct OID string
+    - Decodes ML-KEM-768, ML-KEM-1024, ML-DSA-44, ML-DSA-65, ML-DSA-87 correctly
+    - Throws for empty bytes
+    - Throws for invalid bytes (incomplete multi-byte encoding)
+  - Round-trip tests:
+    - `decodeOid(encodeOid(oid)) === oid` for all 18 algorithm OIDs
+    - Individual round-trip tests for each of the 18 algorithms
+- Tests will FAIL (RED phase) because `src/encoding.ts` implementation doesn't exist yet
+
+### Task 8: Implement OID Encoding (TDD - GREEN) - DONE
+- Created `src/encoding.ts` with DER encoding/decoding functions for OIDs
+- Implemented `encodeOid(oid: string): Uint8Array`:
+  - Parses OID string in dotted notation (e.g., "2.16.840.1.101.3.4.4.1")
+  - Combines first two arcs as per DER rules: (first * 40) + second
+  - Encodes each arc using base-128 with high bit set on continuation bytes
+  - Validates OID format: requires at least 2 arcs, numeric values only
+  - Validates first arc (must be 0, 1, or 2)
+  - Validates second arc (must be <= 39 when first arc is 0 or 1)
+- Implemented `decodeOid(bytes: Uint8Array): string`:
+  - Decodes DER bytes back to OID string
+  - Handles base-128 decoding with continuation bytes
+  - Splits combined first byte into first two arcs
+  - Throws for empty bytes or incomplete multi-byte encoding
+- Helper function `encodeArc(value: number)` handles base-128 encoding for arc values
+- All tests in `tests/encoding.test.ts` should now pass (GREEN phase)
+
+### Task 9: Write JOSE/COSE Mapping Tests (TDD - RED) - DONE
+- Created `tests/mappings.test.ts` with comprehensive tests for JOSE and COSE algorithm mappings
+- Test coverage includes:
+  - `toJOSE()` tests:
+    - Returns 'ML-DSA-44' for ML-DSA-44
+    - Returns 'ML-DSA-65' for ML-DSA-65
+    - Returns 'ML-DSA-87' for ML-DSA-87
+    - Throws for unsupported algorithms (ML-KEM-512, ML-KEM-768, ML-KEM-1024)
+    - Throws for unsupported algorithms (SLH-DSA-SHA2-128s, SLH-DSA-SHAKE-256f)
+  - `fromJOSE()` tests:
+    - Returns 'ML-DSA-44' for 'ML-DSA-44'
+    - Returns 'ML-DSA-65' for 'ML-DSA-65'
+    - Returns 'ML-DSA-87' for 'ML-DSA-87'
+    - Throws for unknown JOSE algorithm
+    - Throws for unsupported JOSE algorithm (e.g., 'RS256')
+  - `toCOSE()` tests:
+    - Returns -47 for ML-DSA-44
+    - Returns -48 for ML-DSA-65
+    - Returns -49 for ML-DSA-87
+    - Throws for unsupported algorithms (ML-KEM, SLH-DSA)
+  - `fromCOSE()` tests:
+    - Returns 'ML-DSA-44' for -47
+    - Returns 'ML-DSA-65' for -48
+    - Returns 'ML-DSA-87' for -49
+    - Throws for unknown COSE algorithm number
+    - Throws for positive COSE algorithm number
+  - Round-trip tests:
+    - `fromJOSE(toJOSE(alg)) === alg` for all ML-DSA algorithms
+    - `fromCOSE(toCOSE(alg)) === alg` for all ML-DSA algorithms
+- Tests will FAIL (RED phase) because `src/mappings/jose.ts` and `src/mappings/cose.ts` don't exist yet
+
+### Task 10: Implement JOSE/COSE Mappings (TDD - GREEN) - DONE
+- Created `src/mappings/jose.ts` with JOSE algorithm mappings for ML-DSA:
+  - `ALGORITHM_TO_JOSE` map: ML-DSA-44 -> 'ML-DSA-44', ML-DSA-65 -> 'ML-DSA-65', ML-DSA-87 -> 'ML-DSA-87'
+  - `JOSE_TO_ALGORITHM` map: reverse lookup for JOSE identifiers
+  - `toJOSE(algorithm: MLDSAAlgorithm): string` - converts ML-DSA algorithm to JOSE identifier
+  - `fromJOSE(jose: string): MLDSAAlgorithm` - converts JOSE identifier to ML-DSA algorithm
+  - Throws for unsupported algorithms (only ML-DSA supported in JOSE)
+- Created `src/mappings/cose.ts` with COSE algorithm mappings for ML-DSA:
+  - `ALGORITHM_TO_COSE` map: ML-DSA-44 -> -47, ML-DSA-65 -> -48, ML-DSA-87 -> -49
+  - `COSE_TO_ALGORITHM` map: reverse lookup for COSE algorithm numbers
+  - `toCOSE(algorithm: MLDSAAlgorithm): number` - converts ML-DSA algorithm to COSE number
+  - `fromCOSE(cose: number): MLDSAAlgorithm` - converts COSE number to ML-DSA algorithm
+  - Throws for unsupported algorithms (only ML-DSA supported in COSE per draft-ietf-cose-dilithium)
+- All tests in `tests/mappings.test.ts` should now pass (GREEN phase)
+
+### Task 11: Create Main Export and OID Object - DONE
+- Created `src/index.ts` with unified exports for the package:
+  - Imports all OID constants from `./oid`: ML_KEM_512, ML_KEM_768, ML_KEM_1024, ML_DSA_44, ML_DSA_65, ML_DSA_87, and all 12 SLH-DSA variants
+  - Imports `fromName` and `toName` lookup functions from `./oid`
+  - Imports `encodeOid` and `decodeOid` from `./encoding`
+  - Imports `toJOSE` and `fromJOSE` from `./mappings/jose`
+  - Imports `toCOSE` and `fromCOSE` from `./mappings/cose`
+  - Re-exports `Algorithm` object from `./algorithm`
+  - Re-exports all types from `./types`
+  - Creates unified `OID` object with:
+    - All 18 OID constants
+    - `fromName` and `toName` for name/OID conversion
+    - `toBytes` (encodeOid) and `fromBytes` (decodeOid) for DER encoding
+    - `toJOSE` and `fromJOSE` for JOSE mappings
+    - `toCOSE` and `fromCOSE` for COSE mappings
+- Package exports: `OID`, `Algorithm`, and all types from `./types`
+
+### Task 12: Final Verification - DONE
+- Verified all source files are correctly implemented:
+  - `src/types.ts`: All type definitions (AlgorithmType, AlgorithmFamily, AlgorithmName, AlgorithmInfo)
+  - `src/oid.ts`: All 18 OID constants and lookup functions (fromName, toName)
+  - `src/algorithm.ts`: ALGORITHM_INFO map and Algorithm object (get, list, listByType, listByFamily)
+  - `src/encoding.ts`: DER encoding/decoding functions (encodeOid, decodeOid)
+  - `src/mappings/jose.ts`: JOSE mappings for ML-DSA (toJOSE, fromJOSE)
+  - `src/mappings/cose.ts`: COSE mappings for ML-DSA (toCOSE, fromCOSE)
+  - `src/index.ts`: Unified OID object with all constants and functions, Algorithm export, and type re-exports
+- Verified all test files exist:
+  - `tests/setup.test.ts`: Basic setup test
+  - `tests/oid.test.ts`: OID constant and lookup function tests
+  - `tests/algorithm.test.ts`: Algorithm metadata tests
+  - `tests/encoding.test.ts`: DER encoding/decoding tests
+  - `tests/mappings.test.ts`: JOSE/COSE mapping tests
+- Code review confirms implementation matches PRD specifications
+- Run `bun install && bun test && bun run build && tsc --noEmit` to complete verification
+

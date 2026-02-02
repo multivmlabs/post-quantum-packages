@@ -1,222 +1,232 @@
-//! pq-oid - OID constants for all PQ algorithms (ML-KEM, ML-DSA, SLH-DSA)
+//! pq-oid - Type-safe OID constants for post-quantum algorithms
 //!
 //! This crate provides OID (Object Identifier) constants and utilities for
 //! post-quantum cryptographic algorithms as defined in FIPS 203, 204, and 205.
 //!
 //! # Features
 //!
-//! - OID constants for ML-KEM, ML-DSA, and SLH-DSA algorithms
-//! - Algorithm information (key sizes, security levels)
+//! - Type-safe enums for ML-KEM, ML-DSA, and SLH-DSA algorithm families
+//! - Ergonomic conversions via `FromStr`, `TryFrom<&str>`, and `Display`
+//! - Direct access to algorithm properties (key sizes, security levels, OIDs)
 //! - DER encoding/decoding of OIDs
-//! - JOSE and COSE algorithm mappings for ML-DSA
+//! - JOSE and COSE mappings for ML-DSA
 //!
-//! # Example
+//! # Quick Start
 //!
 //! ```rust
-//! use pq_oid::{Oid, Algorithm, AlgorithmName, AlgorithmType};
+//! use pq_oid::{MlKem, MlDsa, SlhDsa, Algorithm};
+//! use std::str::FromStr;
 //!
-//! // Get OID for ML-KEM-512
-//! let oid = Oid::from_name(AlgorithmName::MlKem512);
-//! assert_eq!(oid, "2.16.840.1.101.3.4.4.1");
+//! // Parse from string
+//! let kem: MlKem = "ML-KEM-512".parse().unwrap();
+//! assert_eq!(kem.oid(), "2.16.840.1.101.3.4.4.1");
+//! assert_eq!(kem.public_key_size(), 800);
 //!
-//! // Get algorithm info
-//! let info = Algorithm::get(AlgorithmName::MlKem512);
-//! assert_eq!(info.public_key_size, 800);
+//! // Or use try_into
+//! let dsa: MlDsa = "ML-DSA-65".try_into().unwrap();
+//! assert_eq!(dsa.jose(), "ML-DSA-65");
+//! assert_eq!(dsa.cose(), -48);
 //!
-//! // List all KEM algorithms
-//! for name in Algorithm::list_by_type(AlgorithmType::Kem) {
-//!     println!("{}", name);
-//! }
+//! // Convert back to string
+//! let name: &str = kem.as_ref();
+//! assert_eq!(name, "ML-KEM-512");
+//!
+//! // Unified algorithm type
+//! let alg: Algorithm = MlKem::Kem512.into();
+//! assert_eq!(alg.family(), pq_oid::AlgorithmFamily::MlKem);
 //! ```
+//!
+//! # Algorithm Families
+//!
+//! ## ML-KEM (FIPS 203)
+//!
+//! Module-Lattice-Based Key-Encapsulation Mechanism:
+//! - [`MlKem::Kem512`] - NIST Level 1
+//! - [`MlKem::Kem768`] - NIST Level 3
+//! - [`MlKem::Kem1024`] - NIST Level 5
+//!
+//! ## ML-DSA (FIPS 204)
+//!
+//! Module-Lattice-Based Digital Signature Algorithm:
+//! - [`MlDsa::Dsa44`] - NIST Level 2
+//! - [`MlDsa::Dsa65`] - NIST Level 3
+//! - [`MlDsa::Dsa87`] - NIST Level 5
+//!
+//! ## SLH-DSA (FIPS 205)
+//!
+//! Stateless Hash-Based Digital Signature Algorithm with SHA2 and SHAKE variants
+//! in both "small" (s) and "fast" (f) modes.
 
-mod algorithm;
 mod encoding;
 mod error;
-pub mod mappings;
-mod oid;
 mod types;
 
-pub use algorithm::{get as algorithm_get, list, list_by_family, list_by_type};
-pub use encoding::{decode_oid, encode_oid};
+// Re-export main types
 pub use error::{Error, Result};
-pub use mappings::{from_cose, from_jose, to_cose, to_jose};
-pub use oid::{from_name, to_name};
-pub use types::{AlgorithmFamily, AlgorithmInfo, AlgorithmName, AlgorithmType, MlDsaAlgorithm};
-
-// Re-export OID constants
-pub use oid::{
-    ML_DSA_44, ML_DSA_65, ML_DSA_87, ML_KEM_1024, ML_KEM_512, ML_KEM_768, SLH_DSA_SHA2_128F,
-    SLH_DSA_SHA2_128S, SLH_DSA_SHA2_192F, SLH_DSA_SHA2_192S, SLH_DSA_SHA2_256F, SLH_DSA_SHA2_256S,
-    SLH_DSA_SHAKE_128F, SLH_DSA_SHAKE_128S, SLH_DSA_SHAKE_192F, SLH_DSA_SHAKE_192S,
-    SLH_DSA_SHAKE_256F, SLH_DSA_SHAKE_256S,
+pub use types::{
+    Algorithm, AlgorithmFamily, AlgorithmInfo, AlgorithmType, HashFunction, MlDsa, MlKem, SlhDsa,
+    SlhDsaMode,
 };
 
-/// Unified OID interface matching the TypeScript API.
-pub struct Oid;
+// Re-export encoding functions
+pub use encoding::{decode_oid, encode_oid};
 
-impl Oid {
-    // ML-KEM OID constants
-    pub const ML_KEM_512: &'static str = oid::ML_KEM_512;
-    pub const ML_KEM_768: &'static str = oid::ML_KEM_768;
-    pub const ML_KEM_1024: &'static str = oid::ML_KEM_1024;
+/// OID constants for all algorithms.
+///
+/// These are provided for convenience when you need the raw OID strings.
+pub mod oid {
+    // ML-KEM OIDs (FIPS 203)
+    pub const ML_KEM_512: &str = "2.16.840.1.101.3.4.4.1";
+    pub const ML_KEM_768: &str = "2.16.840.1.101.3.4.4.2";
+    pub const ML_KEM_1024: &str = "2.16.840.1.101.3.4.4.3";
 
-    // ML-DSA OID constants
-    pub const ML_DSA_44: &'static str = oid::ML_DSA_44;
-    pub const ML_DSA_65: &'static str = oid::ML_DSA_65;
-    pub const ML_DSA_87: &'static str = oid::ML_DSA_87;
+    // ML-DSA OIDs (FIPS 204)
+    pub const ML_DSA_44: &str = "2.16.840.1.101.3.4.3.17";
+    pub const ML_DSA_65: &str = "2.16.840.1.101.3.4.3.18";
+    pub const ML_DSA_87: &str = "2.16.840.1.101.3.4.3.19";
 
-    // SLH-DSA SHA2 OID constants
-    pub const SLH_DSA_SHA2_128S: &'static str = oid::SLH_DSA_SHA2_128S;
-    pub const SLH_DSA_SHA2_128F: &'static str = oid::SLH_DSA_SHA2_128F;
-    pub const SLH_DSA_SHA2_192S: &'static str = oid::SLH_DSA_SHA2_192S;
-    pub const SLH_DSA_SHA2_192F: &'static str = oid::SLH_DSA_SHA2_192F;
-    pub const SLH_DSA_SHA2_256S: &'static str = oid::SLH_DSA_SHA2_256S;
-    pub const SLH_DSA_SHA2_256F: &'static str = oid::SLH_DSA_SHA2_256F;
+    // SLH-DSA SHA2 OIDs (FIPS 205)
+    pub const SLH_DSA_SHA2_128S: &str = "2.16.840.1.101.3.4.3.20";
+    pub const SLH_DSA_SHA2_128F: &str = "2.16.840.1.101.3.4.3.21";
+    pub const SLH_DSA_SHA2_192S: &str = "2.16.840.1.101.3.4.3.22";
+    pub const SLH_DSA_SHA2_192F: &str = "2.16.840.1.101.3.4.3.23";
+    pub const SLH_DSA_SHA2_256S: &str = "2.16.840.1.101.3.4.3.24";
+    pub const SLH_DSA_SHA2_256F: &str = "2.16.840.1.101.3.4.3.25";
 
-    // SLH-DSA SHAKE OID constants
-    pub const SLH_DSA_SHAKE_128S: &'static str = oid::SLH_DSA_SHAKE_128S;
-    pub const SLH_DSA_SHAKE_128F: &'static str = oid::SLH_DSA_SHAKE_128F;
-    pub const SLH_DSA_SHAKE_192S: &'static str = oid::SLH_DSA_SHAKE_192S;
-    pub const SLH_DSA_SHAKE_192F: &'static str = oid::SLH_DSA_SHAKE_192F;
-    pub const SLH_DSA_SHAKE_256S: &'static str = oid::SLH_DSA_SHAKE_256S;
-    pub const SLH_DSA_SHAKE_256F: &'static str = oid::SLH_DSA_SHAKE_256F;
-
-    /// Get the OID string for an algorithm name.
-    #[inline]
-    pub fn from_name(name: AlgorithmName) -> &'static str {
-        oid::from_name(name)
-    }
-
-    /// Get the algorithm name from an OID string.
-    #[inline]
-    pub fn to_name(oid: &str) -> Result<AlgorithmName> {
-        oid::to_name(oid)
-    }
-
-    /// Encode an OID string to DER bytes.
-    #[inline]
-    pub fn to_bytes(oid: &str) -> Result<Vec<u8>> {
-        encode_oid(oid)
-    }
-
-    /// Decode DER bytes to an OID string.
-    #[inline]
-    pub fn from_bytes(bytes: &[u8]) -> Result<String> {
-        decode_oid(bytes)
-    }
-
-    /// Convert an ML-DSA algorithm to its JOSE identifier.
-    #[inline]
-    pub fn to_jose(algorithm: MlDsaAlgorithm) -> &'static str {
-        mappings::to_jose(algorithm)
-    }
-
-    /// Convert a JOSE identifier to an ML-DSA algorithm.
-    #[inline]
-    pub fn from_jose(jose: &str) -> Result<MlDsaAlgorithm> {
-        mappings::from_jose(jose)
-    }
-
-    /// Convert an ML-DSA algorithm to its COSE number.
-    #[inline]
-    pub fn to_cose(algorithm: MlDsaAlgorithm) -> i32 {
-        mappings::to_cose(algorithm)
-    }
-
-    /// Convert a COSE number to an ML-DSA algorithm.
-    #[inline]
-    pub fn from_cose(cose: i32) -> Result<MlDsaAlgorithm> {
-        mappings::from_cose(cose)
-    }
-}
-
-/// Algorithm information interface.
-pub struct Algorithm;
-
-impl Algorithm {
-    /// Get algorithm information by name.
-    #[inline]
-    pub fn get(name: AlgorithmName) -> &'static AlgorithmInfo {
-        algorithm::get(name)
-    }
-
-    /// List all algorithm names.
-    #[inline]
-    pub fn list() -> impl Iterator<Item = AlgorithmName> {
-        algorithm::list()
-    }
-
-    /// List algorithm names by type (KEM or Sign).
-    #[inline]
-    pub fn list_by_type(algorithm_type: AlgorithmType) -> impl Iterator<Item = AlgorithmName> {
-        algorithm::list_by_type(algorithm_type)
-    }
-
-    /// List algorithm names by family (ML-KEM, ML-DSA, or SLH-DSA).
-    #[inline]
-    pub fn list_by_family(family: AlgorithmFamily) -> impl Iterator<Item = AlgorithmName> {
-        algorithm::list_by_family(family)
-    }
+    // SLH-DSA SHAKE OIDs (FIPS 205)
+    pub const SLH_DSA_SHAKE_128S: &str = "2.16.840.1.101.3.4.3.26";
+    pub const SLH_DSA_SHAKE_128F: &str = "2.16.840.1.101.3.4.3.27";
+    pub const SLH_DSA_SHAKE_192S: &str = "2.16.840.1.101.3.4.3.28";
+    pub const SLH_DSA_SHAKE_192F: &str = "2.16.840.1.101.3.4.3.29";
+    pub const SLH_DSA_SHAKE_256S: &str = "2.16.840.1.101.3.4.3.30";
+    pub const SLH_DSA_SHAKE_256F: &str = "2.16.840.1.101.3.4.3.31";
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::FromStr;
 
     #[test]
-    fn test_oid_constants() {
-        assert_eq!(Oid::ML_KEM_512, "2.16.840.1.101.3.4.4.1");
-        assert_eq!(Oid::ML_DSA_44, "2.16.840.1.101.3.4.3.17");
-        assert_eq!(Oid::SLH_DSA_SHA2_128S, "2.16.840.1.101.3.4.3.20");
+    fn test_ml_kem_ergonomics() {
+        // Parse from string
+        let alg: MlKem = "ML-KEM-512".parse().unwrap();
+        assert_eq!(alg, MlKem::Kem512);
+
+        // try_into works
+        let alg: MlKem = "ML-KEM-768".try_into().unwrap();
+        assert_eq!(alg, MlKem::Kem768);
+
+        // Get properties directly
+        assert_eq!(MlKem::Kem512.oid(), oid::ML_KEM_512);
+        assert_eq!(MlKem::Kem512.public_key_size(), 800);
+        assert_eq!(MlKem::Kem512.ciphertext_size(), 768);
+
+        // Convert back to string
+        assert_eq!(MlKem::Kem512.to_string(), "ML-KEM-512");
+        assert_eq!(MlKem::Kem512.as_ref(), "ML-KEM-512");
     }
 
     #[test]
-    fn test_oid_from_name() {
-        assert_eq!(
-            Oid::from_name(AlgorithmName::MlKem512),
-            "2.16.840.1.101.3.4.4.1"
-        );
+    fn test_ml_dsa_ergonomics() {
+        let alg: MlDsa = "ML-DSA-65".parse().unwrap();
+        assert_eq!(alg.oid(), oid::ML_DSA_65);
+        assert_eq!(alg.jose(), "ML-DSA-65");
+        assert_eq!(alg.cose(), -48);
+        assert_eq!(alg.signature_size(), 3309);
     }
 
     #[test]
-    fn test_oid_to_name() {
-        assert_eq!(
-            Oid::to_name("2.16.840.1.101.3.4.4.1").unwrap(),
-            AlgorithmName::MlKem512
-        );
+    fn test_ml_dsa_jose_cose_roundtrip() {
+        for dsa in MlDsa::ALL {
+            // JOSE roundtrip
+            let jose = dsa.jose();
+            let recovered = MlDsa::from_jose(jose).unwrap();
+            assert_eq!(*dsa, recovered);
+
+            // COSE roundtrip
+            let cose = dsa.cose();
+            let recovered = MlDsa::from_cose(cose).unwrap();
+            assert_eq!(*dsa, recovered);
+        }
+    }
+
+    #[test]
+    fn test_slh_dsa_properties() {
+        let alg: SlhDsa = "SLH-DSA-SHA2-128s".parse().unwrap();
+        assert_eq!(alg.hash_function(), HashFunction::Sha2);
+        assert_eq!(alg.mode(), SlhDsaMode::Small);
+        assert_eq!(alg.security_level(), 1);
+
+        let alg: SlhDsa = "SLH-DSA-SHAKE-256f".parse().unwrap();
+        assert_eq!(alg.hash_function(), HashFunction::Shake);
+        assert_eq!(alg.mode(), SlhDsaMode::Fast);
+        assert_eq!(alg.security_level(), 5);
+    }
+
+    #[test]
+    fn test_algorithm_unified() {
+        // Parse any algorithm
+        let alg: Algorithm = "ML-KEM-512".parse().unwrap();
+        assert_eq!(alg.family(), AlgorithmFamily::MlKem);
+        assert_eq!(alg.algorithm_type(), AlgorithmType::Kem);
+
+        let alg: Algorithm = "ML-DSA-44".parse().unwrap();
+        assert_eq!(alg.family(), AlgorithmFamily::MlDsa);
+        assert_eq!(alg.algorithm_type(), AlgorithmType::Sign);
+
+        // Convert from specific to unified
+        let alg: Algorithm = MlKem::Kem768.into();
+        assert_eq!(alg.oid(), oid::ML_KEM_768);
+
+        // Cast back
+        assert!(alg.as_ml_kem().is_some());
+        assert!(alg.as_ml_dsa().is_none());
+    }
+
+    #[test]
+    fn test_algorithm_iteration() {
+        assert_eq!(Algorithm::all().count(), 18);
+        assert_eq!(Algorithm::kems().count(), 3);
+        assert_eq!(Algorithm::signatures().count(), 15);
+    }
+
+    #[test]
+    fn test_from_oid() {
+        let alg = MlKem::from_oid("2.16.840.1.101.3.4.4.1").unwrap();
+        assert_eq!(alg, MlKem::Kem512);
+
+        let alg = Algorithm::from_oid("2.16.840.1.101.3.4.3.17").unwrap();
+        assert_eq!(alg, Algorithm::MlDsa(MlDsa::Dsa44));
     }
 
     #[test]
     fn test_oid_bytes_roundtrip() {
-        let oid = "2.16.840.1.101.3.4.4.1";
-        let bytes = Oid::to_bytes(oid).unwrap();
-        let recovered = Oid::from_bytes(&bytes).unwrap();
-        assert_eq!(oid, recovered);
+        for alg in Algorithm::all() {
+            let oid = alg.oid();
+            let bytes = encode_oid(oid).unwrap();
+            let decoded = decode_oid(&bytes).unwrap();
+            assert_eq!(oid, decoded);
+        }
     }
 
     #[test]
-    fn test_algorithm_get() {
-        let info = Algorithm::get(AlgorithmName::MlKem512);
+    fn test_algorithm_info() {
+        let info = MlKem::Kem512.info();
+        assert_eq!(info.name, "ML-KEM-512");
+        assert_eq!(info.oid, oid::ML_KEM_512);
+        assert_eq!(info.algorithm_type, AlgorithmType::Kem);
+        assert_eq!(info.family, AlgorithmFamily::MlKem);
         assert_eq!(info.public_key_size, 800);
+        assert_eq!(info.ciphertext_size, Some(768));
+        assert_eq!(info.signature_size, None);
     }
 
     #[test]
-    fn test_algorithm_list() {
-        let count = Algorithm::list().count();
-        assert_eq!(count, 18);
-    }
-
-    #[test]
-    fn test_jose_roundtrip() {
-        let jose = Oid::to_jose(MlDsaAlgorithm::MlDsa44);
-        let recovered = Oid::from_jose(jose).unwrap();
-        assert_eq!(recovered, MlDsaAlgorithm::MlDsa44);
-    }
-
-    #[test]
-    fn test_cose_roundtrip() {
-        let cose = Oid::to_cose(MlDsaAlgorithm::MlDsa44);
-        let recovered = Oid::from_cose(cose).unwrap();
-        assert_eq!(recovered, MlDsaAlgorithm::MlDsa44);
+    fn test_error_handling() {
+        assert!(MlKem::from_str("invalid").is_err());
+        assert!(MlDsa::from_jose("invalid").is_err());
+        assert!(MlDsa::from_cose(-100).is_err());
+        assert!(Algorithm::from_oid("1.2.3.4").is_err());
     }
 }

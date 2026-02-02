@@ -4,7 +4,7 @@
 //! - First two arcs are combined: (first * 40) + second
 //! - Each subsequent arc is encoded in base-128 with high bit set on continuation bytes
 
-use crate::{Error, Result};
+use crate::error::{Error, Result};
 
 fn encode_arc(value: u64) -> Vec<u8> {
     if value == 0 {
@@ -186,7 +186,7 @@ pub fn decode_oid(bytes: &[u8]) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::oid;
+    use crate::{Algorithm, MlDsa, MlKem};
 
     // DER encoding reference:
     // OID 2.16.840.1.101.3.4.4.1 encodes as: [0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x04, 0x01]
@@ -196,7 +196,7 @@ mod tests {
 
     #[test]
     fn test_encode_ml_kem_512_exact_bytes() {
-        let bytes = encode_oid(oid::ML_KEM_512).unwrap();
+        let bytes = encode_oid(MlKem::Kem512.oid()).unwrap();
         assert_eq!(
             bytes,
             vec![0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x04, 0x01]
@@ -205,7 +205,7 @@ mod tests {
 
     #[test]
     fn test_encode_ml_kem_768_exact_bytes() {
-        let bytes = encode_oid(oid::ML_KEM_768).unwrap();
+        let bytes = encode_oid(MlKem::Kem768.oid()).unwrap();
         assert_eq!(
             bytes,
             vec![0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x04, 0x02]
@@ -214,7 +214,7 @@ mod tests {
 
     #[test]
     fn test_encode_ml_kem_1024_exact_bytes() {
-        let bytes = encode_oid(oid::ML_KEM_1024).unwrap();
+        let bytes = encode_oid(MlKem::Kem1024.oid()).unwrap();
         assert_eq!(
             bytes,
             vec![0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x04, 0x03]
@@ -223,7 +223,7 @@ mod tests {
 
     #[test]
     fn test_encode_ml_dsa_44_exact_bytes() {
-        let bytes = encode_oid(oid::ML_DSA_44).unwrap();
+        let bytes = encode_oid(MlDsa::Dsa44.oid()).unwrap();
         assert_eq!(
             bytes,
             vec![0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x11]
@@ -232,7 +232,7 @@ mod tests {
 
     #[test]
     fn test_encode_ml_dsa_65_exact_bytes() {
-        let bytes = encode_oid(oid::ML_DSA_65).unwrap();
+        let bytes = encode_oid(MlDsa::Dsa65.oid()).unwrap();
         assert_eq!(
             bytes,
             vec![0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x12]
@@ -241,7 +241,7 @@ mod tests {
 
     #[test]
     fn test_encode_ml_dsa_87_exact_bytes() {
-        let bytes = encode_oid(oid::ML_DSA_87).unwrap();
+        let bytes = encode_oid(MlDsa::Dsa87.oid()).unwrap();
         assert_eq!(
             bytes,
             vec![0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x13]
@@ -251,13 +251,13 @@ mod tests {
     #[test]
     fn test_decode_ml_kem_512_exact_bytes() {
         let bytes = [0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x04, 0x01];
-        assert_eq!(decode_oid(&bytes).unwrap(), oid::ML_KEM_512);
+        assert_eq!(decode_oid(&bytes).unwrap(), MlKem::Kem512.oid());
     }
 
     #[test]
     fn test_decode_ml_dsa_44_exact_bytes() {
         let bytes = [0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x11];
-        assert_eq!(decode_oid(&bytes).unwrap(), oid::ML_DSA_44);
+        assert_eq!(decode_oid(&bytes).unwrap(), MlDsa::Dsa44.oid());
     }
 
     #[test]
@@ -278,10 +278,8 @@ mod tests {
 
     #[test]
     fn test_roundtrip_all_algorithm_oids() {
-        use crate::types::AlgorithmName;
-
-        for name in AlgorithmName::all() {
-            let oid_str = crate::oid::from_name(*name);
+        for alg in Algorithm::all() {
+            let oid_str = alg.oid();
             let encoded = encode_oid(oid_str).unwrap();
             let decoded = decode_oid(&encoded).unwrap();
             assert_eq!(oid_str, decoded);
@@ -323,7 +321,6 @@ mod tests {
 
     #[test]
     fn test_decode_incomplete() {
-        // Byte with high bit set at the end (incomplete)
         assert!(matches!(
             decode_oid(&[0x86, 0x48, 0x80]),
             Err(Error::InvalidOidBytes(_))
@@ -332,7 +329,6 @@ mod tests {
 
     #[test]
     fn test_decode_incomplete_at_start() {
-        // 0x86 has high bit set, indicating continuation, but sequence ends
         assert!(matches!(
             decode_oid(&[0x60, 0x86]),
             Err(Error::InvalidOidBytes(_))
