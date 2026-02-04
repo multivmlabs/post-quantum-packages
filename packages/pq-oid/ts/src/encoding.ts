@@ -6,6 +6,9 @@
  * - Each subsequent arc is encoded in base-128 with high bit set on continuation bytes
  */
 
+// Max continuation bytes for a safe integer in base-128: ceil(53/7) = 8
+const MAX_ARC_BYTES = 8;
+
 /**
  * Encode a single arc value to base-128 bytes.
  * High bit is set on all bytes except the last.
@@ -73,8 +76,11 @@ export function encodeOid(oid: string): Uint8Array {
     );
   }
 
-  // Combine first two arcs
+  // Combine first two arcs (with overflow check)
   const combined = first * 40 + second;
+  if (!Number.isSafeInteger(combined)) {
+    throw new Error('Invalid OID: arc value overflow');
+  }
 
   const result: number[] = [];
 
@@ -104,9 +110,15 @@ export function decodeOid(bytes: Uint8Array): string {
   const arcs: number[] = [];
   let i = 0;
 
-  // Decode first byte (combined first two arcs)
+  // Decode first byte(s) (combined first two arcs)
   let value = 0;
+  let arcBytes = 0;
   while (i < bytes.length) {
+    arcBytes++;
+    if (arcBytes > MAX_ARC_BYTES) {
+      throw new Error('Invalid OID bytes: arc value too large');
+    }
+
     const byte = bytes[i];
     value = (value << 7) | (byte & 0x7f);
     i++;
@@ -142,9 +154,15 @@ export function decodeOid(bytes: Uint8Array): string {
   // Decode remaining arcs
   while (i < bytes.length) {
     value = 0;
+    arcBytes = 0;
     const startIndex = i;
 
     while (i < bytes.length) {
+      arcBytes++;
+      if (arcBytes > MAX_ARC_BYTES) {
+        throw new Error('Invalid OID bytes: arc value too large');
+      }
+
       const byte = bytes[i];
       value = (value << 7) | (byte & 0x7f);
       i++;

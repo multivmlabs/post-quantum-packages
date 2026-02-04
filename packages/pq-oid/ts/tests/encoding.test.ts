@@ -102,6 +102,10 @@ describe('encodeOid()', () => {
   it('should throw for invalid OID format (second arc > 39 when first arc is 0 or 1)', () => {
     expect(() => encodeOid('0.40.840.1')).toThrow();
   });
+
+  it('should throw for invalid OID format (leading zeros in arc)', () => {
+    expect(() => encodeOid('2.16.01.1')).toThrow();
+  });
 });
 
 describe('decodeOid()', () => {
@@ -142,6 +146,16 @@ describe('decodeOid()', () => {
   it('should throw for invalid bytes (incomplete multi-byte encoding)', () => {
     // 0x86 has high bit set, indicating continuation, but no following byte
     expect(() => decodeOid(new Uint8Array([0x60, 0x86]))).toThrow();
+  });
+
+  it('should throw for arc value too large (exceeds MAX_ARC_BYTES)', () => {
+    // 9 continuation bytes (all with high bit set) + 1 final byte = 10 bytes for one arc
+    // This exceeds MAX_ARC_BYTES (8) and should throw
+    const tooManyBytes = new Uint8Array([
+      0x60, // first arc (valid)
+      0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01, // 9 bytes for second arc
+    ]);
+    expect(() => decodeOid(tooManyBytes)).toThrow('arc value too large');
   });
 });
 
