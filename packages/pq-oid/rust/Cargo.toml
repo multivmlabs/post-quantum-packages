@@ -8,6 +8,10 @@ readme = "README.md"
 keywords = ["post-quantum", "cryptography", "pqc"]
 categories = ["cryptography"]
 
+[features]
+default = ["std"]
+std = []
+
 [dependencies]
 
 [dev-dependencies]

@@ -1,9 +1,10 @@
 //! Error types for pq-oid.
 
-use std::fmt;
+use core::fmt;
 
 /// Error type for pq-oid operations.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum Error {
     /// Unknown algorithm name.
     UnknownAlgorithm(String),
@@ -32,6 +33,7 @@ impl fmt::Display for Error {
     }
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for Error {}
 
 /// Result type for pq-oid operations.
