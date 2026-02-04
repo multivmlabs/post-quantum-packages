@@ -64,8 +64,8 @@ mod types;
 // Re-export main types
 pub use error::{Error, Result};
 pub use types::{
-    Algorithm, AlgorithmFamily, AlgorithmInfo, AlgorithmType, HashFunction, MlDsa, MlKem, SlhDsa,
-    SlhDsaMode,
+    Algorithm, AlgorithmFamily, AlgorithmInfo, AlgorithmSizes, AlgorithmType, HashFunction, MlDsa,
+    MlKem, SecurityLevel, SlhDsa, SlhDsaMode,
 };
 
 // Re-export encoding functions
@@ -183,12 +183,12 @@ mod tests {
         let alg: SlhDsa = "SLH-DSA-SHA2-128s".parse().unwrap();
         assert_eq!(alg.hash_function(), HashFunction::Sha2);
         assert_eq!(alg.mode(), SlhDsaMode::Small);
-        assert_eq!(alg.security_level(), 1);
+        assert_eq!(alg.security_level(), SecurityLevel::Level1);
 
         let alg: SlhDsa = "SLH-DSA-SHAKE-256f".parse().unwrap();
         assert_eq!(alg.hash_function(), HashFunction::Shake);
         assert_eq!(alg.mode(), SlhDsaMode::Fast);
-        assert_eq!(alg.security_level(), 5);
+        assert_eq!(alg.security_level(), SecurityLevel::Level5);
     }
 
     #[test]
@@ -245,15 +245,20 @@ mod tests {
         assert_eq!(info.algorithm_type, AlgorithmType::Kem);
         assert_eq!(info.family, AlgorithmFamily::MlKem);
         assert_eq!(info.public_key_size, 800);
-        assert_eq!(info.ciphertext_size, Some(768));
-        assert_eq!(info.signature_size, None);
+        assert_eq!(
+            info.sizes,
+            AlgorithmSizes::Kem {
+                ciphertext_size: 768,
+                shared_secret_size: 32
+            }
+        );
     }
 
     #[test]
     fn test_error_handling() {
         assert!(MlKem::from_str("invalid").is_err());
         assert!(MlDsa::from_jose("invalid").is_err());
-        assert!(MlDsa::from_cose(-100).is_err());
+        assert!(MlDsa::from_cose(-100).is_none());
         assert!(Algorithm::from_oid("1.2.3.4").is_err());
     }
 

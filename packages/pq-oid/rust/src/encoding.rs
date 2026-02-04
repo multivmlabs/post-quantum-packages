@@ -34,16 +34,13 @@ fn encode_arc(value: u64, output: &mut Vec<u8>) {
 
 /// Parse and validate an arc string, returning the numeric value.
 fn parse_arc(part: &str) -> Result<u64> {
-    let num: u64 = part
-        .parse()
-        .map_err(|_| Error::InvalidOid(format!("non-numeric arc \"{}\"", part)))?;
-
     // Verify no leading zeros (e.g., "01" should fail)
     if part.len() > 1 && part.starts_with('0') {
-        return Err(Error::InvalidOid(format!("non-numeric arc \"{}\"", part)));
+        return Err(Error::InvalidOid("invalid arc with leading zero"));
     }
 
-    Ok(num)
+    part.parse()
+        .map_err(|_| Error::InvalidOid("non-numeric arc"))
 }
 
 /// Encode an OID string to DER bytes, writing to the provided buffer.
@@ -58,42 +55,36 @@ fn parse_arc(part: &str) -> Result<u64> {
 /// Returns an error if the OID format is invalid
 pub fn encode_oid_to(oid: &str, out: &mut Vec<u8>) -> Result<()> {
     if oid.is_empty() || oid.trim().is_empty() {
-        return Err(Error::InvalidOid("empty string".to_string()));
+        return Err(Error::InvalidOid("empty string"));
     }
 
     let mut parts = oid.split('.');
 
     // Parse first arc
-    let first_str = parts.next().ok_or_else(|| Error::InvalidOid("empty string".to_string()))?;
+    let first_str = parts.next().ok_or(Error::InvalidOid("empty string"))?;
     let first = parse_arc(first_str)?;
 
     // Parse second arc
     let second_str = parts
         .next()
-        .ok_or_else(|| Error::InvalidOid("must have at least 2 arcs".to_string()))?;
+        .ok_or(Error::InvalidOid("must have at least 2 arcs"))?;
     let second = parse_arc(second_str)?;
 
     // First arc must be 0, 1, or 2
     if first > 2 {
-        return Err(Error::InvalidOid(format!(
-            "first arc must be 0, 1, or 2, got {}",
-            first
-        )));
+        return Err(Error::InvalidOid("first arc must be 0, 1, or 2"));
     }
 
     // When first arc is 0 or 1, second arc must be < 40
     if first < 2 && second > 39 {
-        return Err(Error::InvalidOid(format!(
-            "when first arc is {}, second arc must be <= 39, got {}",
-            first, second
-        )));
+        return Err(Error::InvalidOid("second arc must be <= 39 when first arc is 0 or 1"));
     }
 
     // Encode combined first two arcs (use checked arithmetic to prevent overflow)
     let combined = first
         .checked_mul(40)
         .and_then(|v| v.checked_add(second))
-        .ok_or_else(|| Error::InvalidOid("arc value overflow".to_string()))?;
+        .ok_or(Error::InvalidOid("arc value overflow"))?;
     encode_arc(combined, out);
 
     // Encode remaining arcs
@@ -133,7 +124,7 @@ pub fn encode_oid(oid: &str) -> Result<Vec<u8>> {
 /// Returns an error if the bytes are invalid
 pub fn decode_oid(bytes: &[u8]) -> Result<String> {
     if bytes.is_empty() {
-        return Err(Error::InvalidOidBytes("empty".to_string()));
+        return Err(Error::InvalidOidBytes("empty"));
     }
 
     let mut arcs = Vec::new();
@@ -148,7 +139,7 @@ pub fn decode_oid(bytes: &[u8]) -> Result<String> {
     while i < bytes.len() {
         arc_bytes += 1;
         if arc_bytes > MAX_ARC_BYTES {
-            return Err(Error::InvalidOidBytes("arc value too large".to_string()));
+            return Err(Error::InvalidOidBytes("arc value too large"));
         }
 
         let byte = bytes[i];
@@ -163,9 +154,7 @@ pub fn decode_oid(bytes: &[u8]) -> Result<String> {
 
     // Check if we ended in the middle of a multi-byte value
     if i > 0 && bytes[i - 1] & 0x80 != 0 {
-        return Err(Error::InvalidOidBytes(
-            "incomplete multi-byte encoding".to_string(),
-        ));
+        return Err(Error::InvalidOidBytes("incomplete multi-byte encoding"));
     }
 
     // Split combined value into first two arcs
@@ -189,7 +178,7 @@ pub fn decode_oid(bytes: &[u8]) -> Result<String> {
         while i < bytes.len() {
             arc_bytes += 1;
             if arc_bytes > MAX_ARC_BYTES {
-                return Err(Error::InvalidOidBytes("arc value too large".to_string()));
+                return Err(Error::InvalidOidBytes("arc value too large"));
             }
 
             let byte = bytes[i];
@@ -204,9 +193,7 @@ pub fn decode_oid(bytes: &[u8]) -> Result<String> {
 
         // Check if we ended in the middle of a multi-byte value
         if i > start_index && bytes[i - 1] & 0x80 != 0 {
-            return Err(Error::InvalidOidBytes(
-                "incomplete multi-byte encoding".to_string(),
-            ));
+            return Err(Error::InvalidOidBytes("incomplete multi-byte encoding"));
         }
 
         arcs.push(value);

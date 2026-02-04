@@ -2,8 +2,8 @@
 //!
 //! This module provides ergonomic, type-safe enums for all PQ algorithms.
 
-use std::fmt;
-use std::str::FromStr;
+use core::fmt;
+use core::str::FromStr;
 
 use crate::error::{Error, Result};
 
@@ -47,9 +47,59 @@ impl fmt::Display for AlgorithmFamily {
     }
 }
 
+/// NIST security level.
+///
+/// NIST defines security levels 1, 2, 3, and 5 for post-quantum algorithms.
+/// Level 4 is not used.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum SecurityLevel {
+    /// Level 1: At least as hard to break as AES-128
+    Level1 = 1,
+    /// Level 2: At least as hard to break as SHA-256 collision
+    Level2 = 2,
+    /// Level 3: At least as hard to break as AES-192
+    Level3 = 3,
+    /// Level 5: At least as hard to break as AES-256
+    Level5 = 5,
+}
+
+impl SecurityLevel {
+    /// Returns the numeric value (1, 2, 3, or 5).
+    #[inline]
+    pub const fn as_u8(&self) -> u8 {
+        *self as u8
+    }
+}
+
+impl fmt::Display for SecurityLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Level {}", self.as_u8())
+    }
+}
+
 // =============================================================================
 // Algorithm Info
 // =============================================================================
+
+/// Type-specific sizes for algorithms.
+///
+/// KEMs have ciphertext and shared secret sizes, while signing algorithms
+/// have signature sizes. This enum makes invalid states unrepresentable.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AlgorithmSizes {
+    /// Sizes specific to Key Encapsulation Mechanisms.
+    Kem {
+        /// Ciphertext size in bytes
+        ciphertext_size: usize,
+        /// Shared secret size in bytes
+        shared_secret_size: usize,
+    },
+    /// Sizes specific to Digital Signature algorithms.
+    Sign {
+        /// Signature size in bytes
+        signature_size: usize,
+    },
+}
 
 /// Information about a specific algorithm variant.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -62,16 +112,14 @@ pub struct AlgorithmInfo {
     pub algorithm_type: AlgorithmType,
     /// The algorithm family
     pub family: AlgorithmFamily,
-    /// NIST security level (1, 2, 3, or 5)
-    pub security_level: u8,
+    /// NIST security level
+    pub security_level: SecurityLevel,
     /// Public key size in bytes
     pub public_key_size: usize,
     /// Private/secret key size in bytes
     pub private_key_size: usize,
-    /// Signature size in bytes (only for signing algorithms)
-    pub signature_size: Option<usize>,
-    /// Ciphertext size in bytes (only for KEMs)
-    pub ciphertext_size: Option<usize>,
+    /// Type-specific sizes (ciphertext for KEMs, signature for signing)
+    pub sizes: AlgorithmSizes,
 }
 
 // =============================================================================
@@ -100,6 +148,9 @@ pub enum MlKem {
 }
 
 impl MlKem {
+    /// Number of ML-KEM variants.
+    pub const COUNT: usize = 3;
+
     /// All ML-KEM variants.
     pub const ALL: &'static [MlKem] = &[MlKem::Kem512, MlKem::Kem768, MlKem::Kem1024];
 
@@ -125,11 +176,11 @@ impl MlKem {
 
     /// Returns the NIST security level.
     #[inline]
-    pub const fn security_level(&self) -> u8 {
+    pub const fn security_level(&self) -> SecurityLevel {
         match self {
-            MlKem::Kem512 => 1,
-            MlKem::Kem768 => 3,
-            MlKem::Kem1024 => 5,
+            MlKem::Kem512 => SecurityLevel::Level1,
+            MlKem::Kem768 => SecurityLevel::Level3,
+            MlKem::Kem1024 => SecurityLevel::Level5,
         }
     }
 
@@ -179,8 +230,10 @@ impl MlKem {
             security_level: self.security_level(),
             public_key_size: self.public_key_size(),
             private_key_size: self.private_key_size(),
-            signature_size: None,
-            ciphertext_size: Some(self.ciphertext_size()),
+            sizes: AlgorithmSizes::Kem {
+                ciphertext_size: self.ciphertext_size(),
+                shared_secret_size: self.shared_secret_size(),
+            },
         }
     }
 
@@ -190,7 +243,7 @@ impl MlKem {
             "2.16.840.1.101.3.4.4.1" => Ok(MlKem::Kem512),
             "2.16.840.1.101.3.4.4.2" => Ok(MlKem::Kem768),
             "2.16.840.1.101.3.4.4.3" => Ok(MlKem::Kem1024),
-            _ => Err(Error::UnknownOid(oid.to_string())),
+            _ => Err(Error::UnknownOid),
         }
     }
 }
@@ -215,7 +268,7 @@ impl FromStr for MlKem {
             "ML-KEM-512" => Ok(MlKem::Kem512),
             "ML-KEM-768" => Ok(MlKem::Kem768),
             "ML-KEM-1024" => Ok(MlKem::Kem1024),
-            _ => Err(Error::UnknownAlgorithm(s.to_string())),
+            _ => Err(Error::UnknownAlgorithm),
         }
     }
 }
@@ -255,6 +308,9 @@ pub enum MlDsa {
 }
 
 impl MlDsa {
+    /// Number of ML-DSA variants.
+    pub const COUNT: usize = 3;
+
     /// All ML-DSA variants.
     pub const ALL: &'static [MlDsa] = &[MlDsa::Dsa44, MlDsa::Dsa65, MlDsa::Dsa87];
 
@@ -280,11 +336,11 @@ impl MlDsa {
 
     /// Returns the NIST security level.
     #[inline]
-    pub const fn security_level(&self) -> u8 {
+    pub const fn security_level(&self) -> SecurityLevel {
         match self {
-            MlDsa::Dsa44 => 2,
-            MlDsa::Dsa65 => 3,
-            MlDsa::Dsa87 => 5,
+            MlDsa::Dsa44 => SecurityLevel::Level2,
+            MlDsa::Dsa65 => SecurityLevel::Level3,
+            MlDsa::Dsa87 => SecurityLevel::Level5,
         }
     }
 
@@ -345,8 +401,9 @@ impl MlDsa {
             security_level: self.security_level(),
             public_key_size: self.public_key_size(),
             private_key_size: self.private_key_size(),
-            signature_size: Some(self.signature_size()),
-            ciphertext_size: None,
+            sizes: AlgorithmSizes::Sign {
+                signature_size: self.signature_size(),
+            },
         }
     }
 
@@ -356,7 +413,7 @@ impl MlDsa {
             "2.16.840.1.101.3.4.3.17" => Ok(MlDsa::Dsa44),
             "2.16.840.1.101.3.4.3.18" => Ok(MlDsa::Dsa65),
             "2.16.840.1.101.3.4.3.19" => Ok(MlDsa::Dsa87),
-            _ => Err(Error::UnknownOid(oid.to_string())),
+            _ => Err(Error::UnknownOid),
         }
     }
 
@@ -366,17 +423,18 @@ impl MlDsa {
             "ML-DSA-44" => Ok(MlDsa::Dsa44),
             "ML-DSA-65" => Ok(MlDsa::Dsa65),
             "ML-DSA-87" => Ok(MlDsa::Dsa87),
-            _ => Err(Error::UnknownJoseAlgorithm(jose.to_string())),
+            _ => Err(Error::UnknownJoseAlgorithm),
         }
     }
 
     /// Parse from a COSE algorithm number.
-    pub fn from_cose(cose: i32) -> Result<Self> {
+    #[inline]
+    pub const fn from_cose(cose: i32) -> Option<Self> {
         match cose {
-            -48 => Ok(MlDsa::Dsa44),
-            -49 => Ok(MlDsa::Dsa65),
-            -50 => Ok(MlDsa::Dsa87),
-            _ => Err(Error::UnknownCoseAlgorithm(cose)),
+            -48 => Some(MlDsa::Dsa44),
+            -49 => Some(MlDsa::Dsa65),
+            -50 => Some(MlDsa::Dsa87),
+            _ => None,
         }
     }
 }
@@ -401,7 +459,7 @@ impl FromStr for MlDsa {
             "ML-DSA-44" => Ok(MlDsa::Dsa44),
             "ML-DSA-65" => Ok(MlDsa::Dsa65),
             "ML-DSA-87" => Ok(MlDsa::Dsa87),
-            _ => Err(Error::UnknownAlgorithm(s.to_string())),
+            _ => Err(Error::UnknownAlgorithm),
         }
     }
 }
@@ -482,6 +540,9 @@ impl fmt::Display for SlhDsaMode {
 }
 
 impl SlhDsa {
+    /// Number of SLH-DSA variants.
+    pub const COUNT: usize = 12;
+
     /// All SLH-DSA variants.
     pub const ALL: &'static [SlhDsa] = &[
         SlhDsa::Sha2_128s,
@@ -576,11 +637,11 @@ impl SlhDsa {
 
     /// Returns the NIST security level.
     #[inline]
-    pub const fn security_level(&self) -> u8 {
+    pub const fn security_level(&self) -> SecurityLevel {
         match self {
-            SlhDsa::Sha2_128s | SlhDsa::Sha2_128f | SlhDsa::Shake128s | SlhDsa::Shake128f => 1,
-            SlhDsa::Sha2_192s | SlhDsa::Sha2_192f | SlhDsa::Shake192s | SlhDsa::Shake192f => 3,
-            SlhDsa::Sha2_256s | SlhDsa::Sha2_256f | SlhDsa::Shake256s | SlhDsa::Shake256f => 5,
+            SlhDsa::Sha2_128s | SlhDsa::Sha2_128f | SlhDsa::Shake128s | SlhDsa::Shake128f => SecurityLevel::Level1,
+            SlhDsa::Sha2_192s | SlhDsa::Sha2_192f | SlhDsa::Shake192s | SlhDsa::Shake192f => SecurityLevel::Level3,
+            SlhDsa::Sha2_256s | SlhDsa::Sha2_256f | SlhDsa::Shake256s | SlhDsa::Shake256f => SecurityLevel::Level5,
         }
     }
 
@@ -627,8 +688,9 @@ impl SlhDsa {
             security_level: self.security_level(),
             public_key_size: self.public_key_size(),
             private_key_size: self.private_key_size(),
-            signature_size: Some(self.signature_size()),
-            ciphertext_size: None,
+            sizes: AlgorithmSizes::Sign {
+                signature_size: self.signature_size(),
+            },
         }
     }
 
@@ -647,7 +709,7 @@ impl SlhDsa {
             "2.16.840.1.101.3.4.3.29" => Ok(SlhDsa::Shake192f),
             "2.16.840.1.101.3.4.3.30" => Ok(SlhDsa::Shake256s),
             "2.16.840.1.101.3.4.3.31" => Ok(SlhDsa::Shake256f),
-            _ => Err(Error::UnknownOid(oid.to_string())),
+            _ => Err(Error::UnknownOid),
         }
     }
 }
@@ -681,7 +743,7 @@ impl FromStr for SlhDsa {
             "SLH-DSA-SHAKE-192f" => Ok(SlhDsa::Shake192f),
             "SLH-DSA-SHAKE-256s" => Ok(SlhDsa::Shake256s),
             "SLH-DSA-SHAKE-256f" => Ok(SlhDsa::Shake256f),
-            _ => Err(Error::UnknownAlgorithm(s.to_string())),
+            _ => Err(Error::UnknownAlgorithm),
         }
     }
 }
@@ -723,6 +785,15 @@ pub enum Algorithm {
 }
 
 impl Algorithm {
+    /// Total number of supported algorithms.
+    pub const COUNT: usize = 18;
+
+    /// Number of KEM algorithms.
+    pub const KEM_COUNT: usize = MlKem::COUNT;
+
+    /// Number of signing algorithms.
+    pub const SIGNATURE_COUNT: usize = MlDsa::COUNT + SlhDsa::COUNT;
+
     /// All supported algorithms (18 total).
     pub const ALL: &'static [Algorithm] = &[
         // ML-KEM (3)
@@ -831,7 +902,7 @@ impl Algorithm {
 
     /// Returns the NIST security level.
     #[inline]
-    pub const fn security_level(&self) -> u8 {
+    pub const fn security_level(&self) -> SecurityLevel {
         match self {
             Algorithm::MlKem(a) => a.security_level(),
             Algorithm::MlDsa(a) => a.security_level(),
@@ -874,7 +945,6 @@ impl Algorithm {
             .map(Algorithm::MlKem)
             .or_else(|_| MlDsa::from_oid(oid).map(Algorithm::MlDsa))
             .or_else(|_| SlhDsa::from_oid(oid).map(Algorithm::SlhDsa))
-            .map_err(|_| Error::UnknownOid(oid.to_string()))
     }
 
     /// Returns this as an MlKem if it is one.
@@ -1033,7 +1103,10 @@ mod tests {
         let info = MlKem::Kem512.info();
         assert_eq!(info.name, "ML-KEM-512");
         assert_eq!(info.public_key_size, 800);
-        assert_eq!(info.ciphertext_size, Some(768));
+        assert!(matches!(
+            info.sizes,
+            AlgorithmSizes::Kem { ciphertext_size: 768, .. }
+        ));
     }
 
     #[test]
