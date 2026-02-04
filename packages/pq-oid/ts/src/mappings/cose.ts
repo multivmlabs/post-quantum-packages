@@ -3,19 +3,17 @@ import type { MLDSAAlgorithm } from '../types';
 
 // COSE algorithm numbers for ML-DSA
 // Reference: draft-ietf-cose-dilithium
-// ML-DSA-44: -47
-// ML-DSA-65: -48
-// ML-DSA-87: -49
+// https://cose-wg.github.io/draft-ietf-cose-dilithium/draft-ietf-cose-dilithium.html#name-new-cose-algorithms
 const ALGORITHM_TO_COSE: Record<MLDSAAlgorithm, number> = {
-  'ML-DSA-44': -47,
-  'ML-DSA-65': -48,
-  'ML-DSA-87': -49,
+  'ML-DSA-44': -48,
+  'ML-DSA-65': -49,
+  'ML-DSA-87': -50,
 };
 
 const COSE_TO_ALGORITHM: Record<number, MLDSAAlgorithm> = {
-  [-47]: 'ML-DSA-44',
-  [-48]: 'ML-DSA-65',
-  [-49]: 'ML-DSA-87',
+  [-48]: 'ML-DSA-44',
+  [-49]: 'ML-DSA-65',
+  [-50]: 'ML-DSA-87',
 };
 
 /**
