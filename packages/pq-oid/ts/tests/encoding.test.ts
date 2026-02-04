@@ -1,6 +1,44 @@
 import { describe, expect, it } from 'bun:test';
 import { decodeOid, encodeOid } from '../src/encoding';
-import { NAME_TO_OID } from '../src/oid';
+import {
+  ML_DSA_44,
+  ML_DSA_44_BYTES,
+  ML_DSA_65,
+  ML_DSA_65_BYTES,
+  ML_DSA_87,
+  ML_DSA_87_BYTES,
+  ML_KEM_1024,
+  ML_KEM_1024_BYTES,
+  ML_KEM_512,
+  ML_KEM_512_BYTES,
+  ML_KEM_768,
+  ML_KEM_768_BYTES,
+  NAME_TO_OID,
+  SLH_DSA_SHA2_128f,
+  SLH_DSA_SHA2_128f_BYTES,
+  SLH_DSA_SHA2_128s,
+  SLH_DSA_SHA2_128s_BYTES,
+  SLH_DSA_SHA2_192f,
+  SLH_DSA_SHA2_192f_BYTES,
+  SLH_DSA_SHA2_192s,
+  SLH_DSA_SHA2_192s_BYTES,
+  SLH_DSA_SHA2_256f,
+  SLH_DSA_SHA2_256f_BYTES,
+  SLH_DSA_SHA2_256s,
+  SLH_DSA_SHA2_256s_BYTES,
+  SLH_DSA_SHAKE_128f,
+  SLH_DSA_SHAKE_128f_BYTES,
+  SLH_DSA_SHAKE_128s,
+  SLH_DSA_SHAKE_128s_BYTES,
+  SLH_DSA_SHAKE_192f,
+  SLH_DSA_SHAKE_192f_BYTES,
+  SLH_DSA_SHAKE_192s,
+  SLH_DSA_SHAKE_192s_BYTES,
+  SLH_DSA_SHAKE_256f,
+  SLH_DSA_SHAKE_256f_BYTES,
+  SLH_DSA_SHAKE_256s,
+  SLH_DSA_SHAKE_256s_BYTES,
+} from '../src/oid';
 
 // DER encoding reference from PRD:
 // OID 2.16.840.1.101.3.4.4.1 encodes as: [0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x04, 0x01]
@@ -207,5 +245,37 @@ describe('round-trip encoding/decoding', () => {
   it('should round-trip SLH-DSA-SHAKE-256f', () => {
     const oid = '2.16.840.1.101.3.4.3.31';
     expect(decodeOid(encodeOid(oid))).toBe(oid);
+  });
+});
+
+describe('pre-computed OID bytes constants', () => {
+  it('should match runtime encoding for ML-KEM', () => {
+    expect(encodeOid(ML_KEM_512)).toEqual(ML_KEM_512_BYTES);
+    expect(encodeOid(ML_KEM_768)).toEqual(ML_KEM_768_BYTES);
+    expect(encodeOid(ML_KEM_1024)).toEqual(ML_KEM_1024_BYTES);
+  });
+
+  it('should match runtime encoding for ML-DSA', () => {
+    expect(encodeOid(ML_DSA_44)).toEqual(ML_DSA_44_BYTES);
+    expect(encodeOid(ML_DSA_65)).toEqual(ML_DSA_65_BYTES);
+    expect(encodeOid(ML_DSA_87)).toEqual(ML_DSA_87_BYTES);
+  });
+
+  it('should match runtime encoding for SLH-DSA-SHA2', () => {
+    expect(encodeOid(SLH_DSA_SHA2_128s)).toEqual(SLH_DSA_SHA2_128s_BYTES);
+    expect(encodeOid(SLH_DSA_SHA2_128f)).toEqual(SLH_DSA_SHA2_128f_BYTES);
+    expect(encodeOid(SLH_DSA_SHA2_192s)).toEqual(SLH_DSA_SHA2_192s_BYTES);
+    expect(encodeOid(SLH_DSA_SHA2_192f)).toEqual(SLH_DSA_SHA2_192f_BYTES);
+    expect(encodeOid(SLH_DSA_SHA2_256s)).toEqual(SLH_DSA_SHA2_256s_BYTES);
+    expect(encodeOid(SLH_DSA_SHA2_256f)).toEqual(SLH_DSA_SHA2_256f_BYTES);
+  });
+
+  it('should match runtime encoding for SLH-DSA-SHAKE', () => {
+    expect(encodeOid(SLH_DSA_SHAKE_128s)).toEqual(SLH_DSA_SHAKE_128s_BYTES);
+    expect(encodeOid(SLH_DSA_SHAKE_128f)).toEqual(SLH_DSA_SHAKE_128f_BYTES);
+    expect(encodeOid(SLH_DSA_SHAKE_192s)).toEqual(SLH_DSA_SHAKE_192s_BYTES);
+    expect(encodeOid(SLH_DSA_SHAKE_192f)).toEqual(SLH_DSA_SHAKE_192f_BYTES);
+    expect(encodeOid(SLH_DSA_SHAKE_256s)).toEqual(SLH_DSA_SHAKE_256s_BYTES);
+    expect(encodeOid(SLH_DSA_SHAKE_256f)).toEqual(SLH_DSA_SHAKE_256f_BYTES);
   });
 });

@@ -12,8 +12,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(3);
       expect(info.publicKeySize).toBe(1952);
       expect(info.privateKeySize).toBe(4032);
-      expect(info.signatureSize).toBe(3309);
-      expect(info.ciphertextSize).toBeUndefined();
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(3309);
+      }
     });
 
     test('returns correct metadata for ML-KEM-768', () => {
@@ -25,8 +27,11 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(3);
       expect(info.publicKeySize).toBe(1184);
       expect(info.privateKeySize).toBe(2400);
-      expect(info.ciphertextSize).toBe(1088);
-      expect(info.signatureSize).toBeUndefined();
+      expect(info.sizes.type).toBe('kem');
+      if (info.sizes.type === 'kem') {
+        expect(info.sizes.ciphertextSize).toBe(1088);
+        expect(info.sizes.sharedSecretSize).toBe(32);
+      }
     });
 
     test('returns correct metadata for ML-KEM-512', () => {
@@ -38,7 +43,11 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(1);
       expect(info.publicKeySize).toBe(800);
       expect(info.privateKeySize).toBe(1632);
-      expect(info.ciphertextSize).toBe(768);
+      expect(info.sizes.type).toBe('kem');
+      if (info.sizes.type === 'kem') {
+        expect(info.sizes.ciphertextSize).toBe(768);
+        expect(info.sizes.sharedSecretSize).toBe(32);
+      }
     });
 
     test('returns correct metadata for ML-KEM-1024', () => {
@@ -50,7 +59,11 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(5);
       expect(info.publicKeySize).toBe(1568);
       expect(info.privateKeySize).toBe(3168);
-      expect(info.ciphertextSize).toBe(1568);
+      expect(info.sizes.type).toBe('kem');
+      if (info.sizes.type === 'kem') {
+        expect(info.sizes.ciphertextSize).toBe(1568);
+        expect(info.sizes.sharedSecretSize).toBe(32);
+      }
     });
 
     test('returns correct metadata for ML-DSA-44', () => {
@@ -62,7 +75,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(2);
       expect(info.publicKeySize).toBe(1312);
       expect(info.privateKeySize).toBe(2560);
-      expect(info.signatureSize).toBe(2420);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(2420);
+      }
     });
 
     test('returns correct metadata for ML-DSA-87', () => {
@@ -74,7 +90,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(5);
       expect(info.publicKeySize).toBe(2592);
       expect(info.privateKeySize).toBe(4896);
-      expect(info.signatureSize).toBe(4627);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(4627);
+      }
     });
 
     test('returns correct metadata for SLH-DSA-SHA2-128s', () => {
@@ -86,7 +105,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(1);
       expect(info.publicKeySize).toBe(32);
       expect(info.privateKeySize).toBe(64);
-      expect(info.signatureSize).toBe(7856);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(7856);
+      }
     });
 
     test('returns correct metadata for SLH-DSA-SHA2-128f', () => {
@@ -98,7 +120,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(1);
       expect(info.publicKeySize).toBe(32);
       expect(info.privateKeySize).toBe(64);
-      expect(info.signatureSize).toBe(17088);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(17088);
+      }
     });
 
     test('returns correct metadata for SLH-DSA-SHA2-192s', () => {
@@ -110,7 +135,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(3);
       expect(info.publicKeySize).toBe(48);
       expect(info.privateKeySize).toBe(96);
-      expect(info.signatureSize).toBe(16224);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(16224);
+      }
     });
 
     test('returns correct metadata for SLH-DSA-SHA2-192f', () => {
@@ -122,7 +150,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(3);
       expect(info.publicKeySize).toBe(48);
       expect(info.privateKeySize).toBe(96);
-      expect(info.signatureSize).toBe(35664);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(35664);
+      }
     });
 
     test('returns correct metadata for SLH-DSA-SHA2-256s', () => {
@@ -134,7 +165,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(5);
       expect(info.publicKeySize).toBe(64);
       expect(info.privateKeySize).toBe(128);
-      expect(info.signatureSize).toBe(29792);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(29792);
+      }
     });
 
     test('returns correct metadata for SLH-DSA-SHA2-256f', () => {
@@ -146,7 +180,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(5);
       expect(info.publicKeySize).toBe(64);
       expect(info.privateKeySize).toBe(128);
-      expect(info.signatureSize).toBe(49856);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(49856);
+      }
     });
 
     test('returns correct metadata for SLH-DSA-SHAKE-128s', () => {
@@ -158,7 +195,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(1);
       expect(info.publicKeySize).toBe(32);
       expect(info.privateKeySize).toBe(64);
-      expect(info.signatureSize).toBe(7856);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(7856);
+      }
     });
 
     test('returns correct metadata for SLH-DSA-SHAKE-128f', () => {
@@ -170,7 +210,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(1);
       expect(info.publicKeySize).toBe(32);
       expect(info.privateKeySize).toBe(64);
-      expect(info.signatureSize).toBe(17088);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(17088);
+      }
     });
 
     test('returns correct metadata for SLH-DSA-SHAKE-192s', () => {
@@ -182,7 +225,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(3);
       expect(info.publicKeySize).toBe(48);
       expect(info.privateKeySize).toBe(96);
-      expect(info.signatureSize).toBe(16224);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(16224);
+      }
     });
 
     test('returns correct metadata for SLH-DSA-SHAKE-192f', () => {
@@ -194,7 +240,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(3);
       expect(info.publicKeySize).toBe(48);
       expect(info.privateKeySize).toBe(96);
-      expect(info.signatureSize).toBe(35664);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(35664);
+      }
     });
 
     test('returns correct metadata for SLH-DSA-SHAKE-256s', () => {
@@ -206,7 +255,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(5);
       expect(info.publicKeySize).toBe(64);
       expect(info.privateKeySize).toBe(128);
-      expect(info.signatureSize).toBe(29792);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(29792);
+      }
     });
 
     test('returns correct metadata for SLH-DSA-SHAKE-256f', () => {
@@ -218,7 +270,10 @@ describe('Algorithm', () => {
       expect(info.securityLevel).toBe(5);
       expect(info.publicKeySize).toBe(64);
       expect(info.privateKeySize).toBe(128);
-      expect(info.signatureSize).toBe(49856);
+      expect(info.sizes.type).toBe('sign');
+      if (info.sizes.type === 'sign') {
+        expect(info.sizes.signatureSize).toBe(49856);
+      }
     });
 
     test('throws for unknown algorithm', () => {
