@@ -24,6 +24,17 @@ export type SLHDSAAlgorithm =
 
 export type AlgorithmName = MLKEMAlgorithm | MLDSAAlgorithm | SLHDSAAlgorithm;
 
+export type AlgorithmSizes =
+  | {
+      type: 'kem';
+      ciphertextSize: number;
+      sharedSecretSize: number;
+    }
+  | {
+      type: 'sign';
+      signatureSize: number;
+    };
+
 export interface AlgorithmInfo {
   name: AlgorithmName;
   oid: string;
@@ -32,6 +43,5 @@ export interface AlgorithmInfo {
   securityLevel: 1 | 2 | 3 | 5;
   publicKeySize: number;
   privateKeySize: number;
-  signatureSize?: number;
-  ciphertextSize?: number;
+  sizes: AlgorithmSizes;
 }

@@ -29,7 +29,11 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 1,
     publicKeySize: 800,
     privateKeySize: 1632,
-    ciphertextSize: 768,
+    sizes: {
+      type: 'kem',
+      ciphertextSize: 768,
+      sharedSecretSize: 32,
+    },
   },
   'ML-KEM-768': {
     name: 'ML-KEM-768',
@@ -39,7 +43,11 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 3,
     publicKeySize: 1184,
     privateKeySize: 2400,
-    ciphertextSize: 1088,
+    sizes: {
+      type: 'kem',
+      ciphertextSize: 1088,
+      sharedSecretSize: 32,
+    },
   },
   'ML-KEM-1024': {
     name: 'ML-KEM-1024',
@@ -49,7 +57,11 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 5,
     publicKeySize: 1568,
     privateKeySize: 3168,
-    ciphertextSize: 1568,
+    sizes: {
+      type: 'kem',
+      ciphertextSize: 1568,
+      sharedSecretSize: 32,
+    },
   },
   'ML-DSA-44': {
     name: 'ML-DSA-44',
@@ -59,7 +71,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 2,
     publicKeySize: 1312,
     privateKeySize: 2560,
-    signatureSize: 2420,
+    sizes: {
+      type: 'sign',
+      signatureSize: 2420,
+    },
   },
   'ML-DSA-65': {
     name: 'ML-DSA-65',
@@ -69,7 +84,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 3,
     publicKeySize: 1952,
     privateKeySize: 4032,
-    signatureSize: 3309,
+    sizes: {
+      type: 'sign',
+      signatureSize: 3309,
+    },
   },
   'ML-DSA-87': {
     name: 'ML-DSA-87',
@@ -79,7 +97,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 5,
     publicKeySize: 2592,
     privateKeySize: 4896,
-    signatureSize: 4627,
+    sizes: {
+      type: 'sign',
+      signatureSize: 4627,
+    },
   },
   'SLH-DSA-SHA2-128s': {
     name: 'SLH-DSA-SHA2-128s',
@@ -89,7 +110,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 1,
     publicKeySize: 32,
     privateKeySize: 64,
-    signatureSize: 7856,
+    sizes: {
+      type: 'sign',
+      signatureSize: 7856,
+    },
   },
   'SLH-DSA-SHA2-128f': {
     name: 'SLH-DSA-SHA2-128f',
@@ -99,7 +123,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 1,
     publicKeySize: 32,
     privateKeySize: 64,
-    signatureSize: 17088,
+    sizes: {
+      type: 'sign',
+      signatureSize: 17088,
+    },
   },
   'SLH-DSA-SHA2-192s': {
     name: 'SLH-DSA-SHA2-192s',
@@ -109,7 +136,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 3,
     publicKeySize: 48,
     privateKeySize: 96,
-    signatureSize: 16224,
+    sizes: {
+      type: 'sign',
+      signatureSize: 16224,
+    },
   },
   'SLH-DSA-SHA2-192f': {
     name: 'SLH-DSA-SHA2-192f',
@@ -119,7 +149,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 3,
     publicKeySize: 48,
     privateKeySize: 96,
-    signatureSize: 35664,
+    sizes: {
+      type: 'sign',
+      signatureSize: 35664,
+    },
   },
   'SLH-DSA-SHA2-256s': {
     name: 'SLH-DSA-SHA2-256s',
@@ -129,7 +162,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 5,
     publicKeySize: 64,
     privateKeySize: 128,
-    signatureSize: 29792,
+    sizes: {
+      type: 'sign',
+      signatureSize: 29792,
+    },
   },
   'SLH-DSA-SHA2-256f': {
     name: 'SLH-DSA-SHA2-256f',
@@ -139,7 +175,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 5,
     publicKeySize: 64,
     privateKeySize: 128,
-    signatureSize: 49856,
+    sizes: {
+      type: 'sign',
+      signatureSize: 49856,
+    },
   },
   'SLH-DSA-SHAKE-128s': {
     name: 'SLH-DSA-SHAKE-128s',
@@ -149,7 +188,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 1,
     publicKeySize: 32,
     privateKeySize: 64,
-    signatureSize: 7856,
+    sizes: {
+      type: 'sign',
+      signatureSize: 7856,
+    },
   },
   'SLH-DSA-SHAKE-128f': {
     name: 'SLH-DSA-SHAKE-128f',
@@ -159,7 +201,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 1,
     publicKeySize: 32,
     privateKeySize: 64,
-    signatureSize: 17088,
+    sizes: {
+      type: 'sign',
+      signatureSize: 17088,
+    },
   },
   'SLH-DSA-SHAKE-192s': {
     name: 'SLH-DSA-SHAKE-192s',
@@ -169,7 +214,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 3,
     publicKeySize: 48,
     privateKeySize: 96,
-    signatureSize: 16224,
+    sizes: {
+      type: 'sign',
+      signatureSize: 16224,
+    },
   },
   'SLH-DSA-SHAKE-192f': {
     name: 'SLH-DSA-SHAKE-192f',
@@ -179,7 +227,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 3,
     publicKeySize: 48,
     privateKeySize: 96,
-    signatureSize: 35664,
+    sizes: {
+      type: 'sign',
+      signatureSize: 35664,
+    },
   },
   'SLH-DSA-SHAKE-256s': {
     name: 'SLH-DSA-SHAKE-256s',
@@ -189,7 +240,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 5,
     publicKeySize: 64,
     privateKeySize: 128,
-    signatureSize: 29792,
+    sizes: {
+      type: 'sign',
+      signatureSize: 29792,
+    },
   },
   'SLH-DSA-SHAKE-256f': {
     name: 'SLH-DSA-SHAKE-256f',
@@ -199,7 +253,10 @@ const ALGORITHM_INFO: Record<AlgorithmName, AlgorithmInfo> = {
     securityLevel: 5,
     publicKeySize: 64,
     privateKeySize: 128,
-    signatureSize: 49856,
+    sizes: {
+      type: 'sign',
+      signatureSize: 49856,
+    },
   },
 };
 
