@@ -25,7 +25,7 @@
 //! // Or use try_into
 //! let dsa: MlDsa = "ML-DSA-65".try_into().unwrap();
 //! assert_eq!(dsa.jose(), "ML-DSA-65");
-//! assert_eq!(dsa.cose(), -48);
+//! assert_eq!(dsa.cose(), -49);
 //!
 //! // Convert back to string
 //! let name: &str = kem.as_ref();
@@ -132,7 +132,7 @@ mod tests {
         let alg: MlDsa = "ML-DSA-65".parse().unwrap();
         assert_eq!(alg.oid(), oid::ML_DSA_65);
         assert_eq!(alg.jose(), "ML-DSA-65");
-        assert_eq!(alg.cose(), -48);
+        assert_eq!(alg.cose(), -49);
         assert_eq!(alg.signature_size(), 3309);
     }
 

@@ -63,16 +63,16 @@ describe('JOSE Mappings', () => {
 
 describe('COSE Mappings', () => {
   describe('toCOSE()', () => {
-    it('should return -47 for ML-DSA-44', () => {
-      expect(toCOSE('ML-DSA-44')).toBe(-47);
+    it('should return -48 for ML-DSA-44', () => {
+      expect(toCOSE('ML-DSA-44')).toBe(-48);
     });
 
-    it('should return -48 for ML-DSA-65', () => {
-      expect(toCOSE('ML-DSA-65')).toBe(-48);
+    it('should return -49 for ML-DSA-65', () => {
+      expect(toCOSE('ML-DSA-65')).toBe(-49);
     });
 
-    it('should return -49 for ML-DSA-87', () => {
-      expect(toCOSE('ML-DSA-87')).toBe(-49);
+    it('should return -50 for ML-DSA-87', () => {
+      expect(toCOSE('ML-DSA-87')).toBe(-50);
     });
 
     it('should throw for unsupported algorithm ML-KEM-512', () => {
@@ -97,16 +97,16 @@ describe('COSE Mappings', () => {
   });
 
   describe('fromCOSE()', () => {
-    it('should return ML-DSA-44 for -47', () => {
-      expect(fromCOSE(-47)).toBe('ML-DSA-44');
+    it('should return ML-DSA-44 for -48', () => {
+      expect(fromCOSE(-48)).toBe('ML-DSA-44');
     });
 
-    it('should return ML-DSA-65 for -48', () => {
-      expect(fromCOSE(-48)).toBe('ML-DSA-65');
+    it('should return ML-DSA-65 for -49', () => {
+      expect(fromCOSE(-49)).toBe('ML-DSA-65');
     });
 
-    it('should return ML-DSA-87 for -49', () => {
-      expect(fromCOSE(-49)).toBe('ML-DSA-87');
+    it('should return ML-DSA-87 for -50', () => {
+      expect(fromCOSE(-50)).toBe('ML-DSA-87');
     });
 
     it('should throw for unknown COSE algorithm number', () => {

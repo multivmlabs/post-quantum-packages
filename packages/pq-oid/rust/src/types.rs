@@ -242,7 +242,7 @@ impl TryFrom<&str> for MlKem {
 /// let alg = MlDsa::from_str("ML-DSA-65").unwrap();
 /// assert_eq!(alg.oid(), "2.16.840.1.101.3.4.3.18");
 /// assert_eq!(alg.jose(), "ML-DSA-65");
-/// assert_eq!(alg.cose(), -48);
+/// assert_eq!(alg.cose(), -49);
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MlDsa {
@@ -325,12 +325,13 @@ impl MlDsa {
     }
 
     /// Returns the COSE algorithm number.
+    /// Ref: https://cose-wg.github.io/draft-ietf-cose-dilithium/draft-ietf-cose-dilithium.html#name-new-cose-algorithms
     #[inline]
     pub const fn cose(&self) -> i32 {
         match self {
-            MlDsa::Dsa44 => -47,
-            MlDsa::Dsa65 => -48,
-            MlDsa::Dsa87 => -49,
+            MlDsa::Dsa44 => -48,
+            MlDsa::Dsa65 => -49,
+            MlDsa::Dsa87 => -50,
         }
     }
 
@@ -372,9 +373,9 @@ impl MlDsa {
     /// Parse from a COSE algorithm number.
     pub fn from_cose(cose: i32) -> Result<Self> {
         match cose {
-            -47 => Ok(MlDsa::Dsa44),
-            -48 => Ok(MlDsa::Dsa65),
-            -49 => Ok(MlDsa::Dsa87),
+            -48 => Ok(MlDsa::Dsa44),
+            -49 => Ok(MlDsa::Dsa65),
+            -50 => Ok(MlDsa::Dsa87),
             _ => Err(Error::UnknownCoseAlgorithm(cose)),
         }
     }
@@ -936,7 +937,7 @@ mod tests {
         let alg: MlDsa = "ML-DSA-65".parse().unwrap();
         assert_eq!(alg, MlDsa::Dsa65);
         assert_eq!(alg.jose(), "ML-DSA-65");
-        assert_eq!(alg.cose(), -48);
+        assert_eq!(alg.cose(), -49);
     }
 
     #[test]
@@ -944,7 +945,7 @@ mod tests {
         let alg = MlDsa::from_jose("ML-DSA-44").unwrap();
         assert_eq!(alg, MlDsa::Dsa44);
 
-        let alg = MlDsa::from_cose(-49).unwrap();
+        let alg = MlDsa::from_cose(-50).unwrap();
         assert_eq!(alg, MlDsa::Dsa87);
     }
 
