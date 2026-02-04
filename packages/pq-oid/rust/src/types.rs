@@ -723,26 +723,71 @@ pub enum Algorithm {
 }
 
 impl Algorithm {
-    /// Returns all supported algorithms.
+    /// All supported algorithms (18 total).
+    pub const ALL: &'static [Algorithm] = &[
+        // ML-KEM (3)
+        Algorithm::MlKem(MlKem::Kem512),
+        Algorithm::MlKem(MlKem::Kem768),
+        Algorithm::MlKem(MlKem::Kem1024),
+        // ML-DSA (3)
+        Algorithm::MlDsa(MlDsa::Dsa44),
+        Algorithm::MlDsa(MlDsa::Dsa65),
+        Algorithm::MlDsa(MlDsa::Dsa87),
+        // SLH-DSA SHA2 (6)
+        Algorithm::SlhDsa(SlhDsa::Sha2_128s),
+        Algorithm::SlhDsa(SlhDsa::Sha2_128f),
+        Algorithm::SlhDsa(SlhDsa::Sha2_192s),
+        Algorithm::SlhDsa(SlhDsa::Sha2_192f),
+        Algorithm::SlhDsa(SlhDsa::Sha2_256s),
+        Algorithm::SlhDsa(SlhDsa::Sha2_256f),
+        // SLH-DSA SHAKE (6)
+        Algorithm::SlhDsa(SlhDsa::Shake128s),
+        Algorithm::SlhDsa(SlhDsa::Shake128f),
+        Algorithm::SlhDsa(SlhDsa::Shake192s),
+        Algorithm::SlhDsa(SlhDsa::Shake192f),
+        Algorithm::SlhDsa(SlhDsa::Shake256s),
+        Algorithm::SlhDsa(SlhDsa::Shake256f),
+    ];
+
+    /// All KEM algorithms.
+    pub const ALL_KEMS: &'static [Algorithm] = &[
+        Algorithm::MlKem(MlKem::Kem512),
+        Algorithm::MlKem(MlKem::Kem768),
+        Algorithm::MlKem(MlKem::Kem1024),
+    ];
+
+    /// All signing algorithms.
+    pub const ALL_SIGNATURES: &'static [Algorithm] = &[
+        Algorithm::MlDsa(MlDsa::Dsa44),
+        Algorithm::MlDsa(MlDsa::Dsa65),
+        Algorithm::MlDsa(MlDsa::Dsa87),
+        Algorithm::SlhDsa(SlhDsa::Sha2_128s),
+        Algorithm::SlhDsa(SlhDsa::Sha2_128f),
+        Algorithm::SlhDsa(SlhDsa::Sha2_192s),
+        Algorithm::SlhDsa(SlhDsa::Sha2_192f),
+        Algorithm::SlhDsa(SlhDsa::Sha2_256s),
+        Algorithm::SlhDsa(SlhDsa::Sha2_256f),
+        Algorithm::SlhDsa(SlhDsa::Shake128s),
+        Algorithm::SlhDsa(SlhDsa::Shake128f),
+        Algorithm::SlhDsa(SlhDsa::Shake192s),
+        Algorithm::SlhDsa(SlhDsa::Shake192f),
+        Algorithm::SlhDsa(SlhDsa::Shake256s),
+        Algorithm::SlhDsa(SlhDsa::Shake256f),
+    ];
+
+    /// Returns an iterator over all supported algorithms.
     pub fn all() -> impl Iterator<Item = Algorithm> {
-        MlKem::ALL
-            .iter()
-            .map(|a| Algorithm::MlKem(*a))
-            .chain(MlDsa::ALL.iter().map(|a| Algorithm::MlDsa(*a)))
-            .chain(SlhDsa::ALL.iter().map(|a| Algorithm::SlhDsa(*a)))
+        Self::ALL.iter().copied()
     }
 
-    /// Returns all KEM algorithms.
+    /// Returns an iterator over all KEM algorithms.
     pub fn kems() -> impl Iterator<Item = Algorithm> {
-        MlKem::ALL.iter().map(|a| Algorithm::MlKem(*a))
+        Self::ALL_KEMS.iter().copied()
     }
 
-    /// Returns all signing algorithms.
+    /// Returns an iterator over all signing algorithms.
     pub fn signatures() -> impl Iterator<Item = Algorithm> {
-        MlDsa::ALL
-            .iter()
-            .map(|a| Algorithm::MlDsa(*a))
-            .chain(SlhDsa::ALL.iter().map(|a| Algorithm::SlhDsa(*a)))
+        Self::ALL_SIGNATURES.iter().copied()
     }
 
     /// Returns the algorithm name string.
