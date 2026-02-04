@@ -31,6 +31,9 @@ import {
 // Re-export Algorithm
 export { Algorithm } from './algorithm';
 
+// Re-export SlhDsa utilities
+export { SlhDsa } from './slh-dsa';
+
 // Re-export all types
 export * from './types';
 

@@ -4,6 +4,10 @@ export type AlgorithmType = 'kem' | 'sign';
 
 export type AlgorithmFamily = 'ML-KEM' | 'ML-DSA' | 'SLH-DSA';
 
+export type HashFunction = 'SHA2' | 'SHAKE';
+
+export type SlhDsaMode = 'small' | 'fast';
+
 export type MLKEMAlgorithm = 'ML-KEM-512' | 'ML-KEM-768' | 'ML-KEM-1024';
 
 export type MLDSAAlgorithm = 'ML-DSA-44' | 'ML-DSA-65' | 'ML-DSA-87';
