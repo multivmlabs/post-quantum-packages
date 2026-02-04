@@ -57,6 +57,18 @@
 //! Stateless Hash-Based Digital Signature Algorithm with SHA2 and SHAKE variants
 //! in both "small" (s) and "fast" (f) modes.
 
+// =============================================================================
+// NOTE: Future enhancements to consider
+// =============================================================================
+// - `serde` feature: Add optional Serialize/Deserialize derives
+// - `zeroize` feature: Add optional secure memory wiping for key material
+// - `const-oid` interop: Integration with RustCrypto's const-oid crate
+// - `AlgorithmOid` trait: Common trait for OID operations across types
+// - `Default` impls: Default implementations for MlKem/MlDsa
+//
+// See: https://github.com/multivmlabs/post-quantum-packages/pull/4
+// =============================================================================
+
 mod encoding;
 mod error;
 mod types;
