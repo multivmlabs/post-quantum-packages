@@ -188,10 +188,27 @@ jobs:
     steps:
       - name: Check CI status
         run: |
-          if [[ "${{ needs.test-typescript.result }}" == "failure" ]] || \
-             [[ "${{ needs.test-rust.result }}" == "failure" ]] || \
-             [[ "${{ needs.test-python.result }}" == "failure" ]]; then
-            echo "One or more test jobs failed"
+          if [[ "${{ needs.detect-changes.result }}" != "success" ]]; then
+            echo "detect-changes failed"
             exit 1
           fi
+
+          if [[ "${{ needs.detect-changes.outputs.has-ts }}" == "true" ]] && \
+             [[ "${{ needs.test-typescript.result }}" != "success" ]]; then
+            echo "TypeScript tests did not succeed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.detect-changes.outputs.has-rust }}" == "true" ]] && \
+             [[ "${{ needs.test-rust.result }}" != "success" ]]; then
+            echo "Rust tests did not succeed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.detect-changes.outputs.has-python }}" == "true" ]] && \
+             [[ "${{ needs.test-python.result }}" != "success" ]]; then
+            echo "Python tests did not succeed"
+            exit 1
+          fi
+
           echo "All required checks passed"
