@@ -280,9 +280,30 @@ function listByFamily(family: AlgorithmFamily): AlgorithmName[] {
   return list().filter((name) => ALGORITHM_INFO[name].family === family);
 }
 
+// Build OID to name lookup map
+const OID_TO_NAME: Record<string, AlgorithmName> = {};
+for (const [name, info] of Object.entries(ALGORITHM_INFO)) {
+  OID_TO_NAME[info.oid] = name as AlgorithmName;
+}
+
+/**
+ * Parse an OID string to get the algorithm name.
+ * @param oid - OID string in dotted notation
+ * @returns The algorithm name
+ * @throws Error if OID is unknown
+ */
+function fromOid(oid: string): AlgorithmName {
+  const name = OID_TO_NAME[oid];
+  if (!name) {
+    throw new Error(`Unknown OID: ${oid}`);
+  }
+  return name;
+}
+
 export const Algorithm = {
   get,
   list,
   listByType,
   listByFamily,
+  fromOid,
 };

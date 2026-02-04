@@ -327,6 +327,32 @@ describe('Algorithm', () => {
     });
   });
 
+  describe('fromOid()', () => {
+    test('returns ML-KEM-512 for its OID', () => {
+      expect(Algorithm.fromOid('2.16.840.1.101.3.4.4.1')).toBe('ML-KEM-512');
+    });
+
+    test('returns ML-DSA-65 for its OID', () => {
+      expect(Algorithm.fromOid('2.16.840.1.101.3.4.3.18')).toBe('ML-DSA-65');
+    });
+
+    test('returns SLH-DSA-SHA2-128s for its OID', () => {
+      expect(Algorithm.fromOid('2.16.840.1.101.3.4.3.20')).toBe('SLH-DSA-SHA2-128s');
+    });
+
+    test('throws for unknown OID', () => {
+      expect(() => Algorithm.fromOid('1.2.3.4.5')).toThrow('Unknown OID: 1.2.3.4.5');
+    });
+
+    test('round-trips with get() for all algorithms', () => {
+      for (const name of Algorithm.list()) {
+        const info = Algorithm.get(name);
+        const recovered = Algorithm.fromOid(info.oid);
+        expect(recovered).toBe(name);
+      }
+    });
+  });
+
   describe('listByFamily()', () => {
     test('returns 3 ML-KEM variants', () => {
       const mlkemAlgorithms = Algorithm.listByFamily('ML-KEM');
