@@ -69,7 +69,7 @@ pub use types::{
 };
 
 // Re-export encoding functions
-pub use encoding::{decode_oid, encode_oid};
+pub use encoding::{decode_oid, encode_oid, encode_oid_to};
 
 /// OID constants for all algorithms.
 ///

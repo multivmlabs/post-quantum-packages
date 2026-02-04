@@ -6,67 +6,72 @@
 
 use crate::error::{Error, Result};
 
-fn encode_arc(value: u64) -> Vec<u8> {
+/// Encode a single arc value directly into the output buffer.
+/// Max u64 in base-128 requires ceil(64/7) = 10 bytes.
+fn encode_arc(value: u64, output: &mut Vec<u8>) {
     if value == 0 {
-        return vec![0];
+        output.push(0);
+        return;
     }
 
-    let mut bytes = Vec::new();
+    let mut buf = [0u8; 10];
+    let mut len = 0;
     let mut v = value;
 
+    // Encode in reverse order (LSB first)
     while v > 0 {
-        bytes.push((v & 0x7f) as u8);
+        buf[len] = (v & 0x7f) as u8;
         v >>= 7;
+        len += 1;
     }
 
-    bytes.reverse();
-
-    // Set high bit on all bytes except the last
-    let len = bytes.len();
-    for byte in bytes.iter_mut().take(len - 1) {
-        *byte |= 0x80;
+    // Write in correct order (MSB first), setting high bit on all but last byte
+    for i in (1..len).rev() {
+        output.push(buf[i] | 0x80);
     }
-
-    bytes
+    output.push(buf[0]); // Last byte without high bit
 }
 
-/// Encode an OID string to DER bytes (without the tag and length).
+/// Parse and validate an arc string, returning the numeric value.
+fn parse_arc(part: &str) -> Result<u64> {
+    let num: u64 = part
+        .parse()
+        .map_err(|_| Error::InvalidOid(format!("non-numeric arc \"{}\"", part)))?;
+
+    // Verify no leading zeros (e.g., "01" should fail)
+    if part.len() > 1 && part.starts_with('0') {
+        return Err(Error::InvalidOid(format!("non-numeric arc \"{}\"", part)));
+    }
+
+    Ok(num)
+}
+
+/// Encode an OID string to DER bytes, writing to the provided buffer.
+///
+/// This is the low-allocation version that writes directly to `out`.
 ///
 /// # Arguments
 /// * `oid` - OID string in dotted notation (e.g., "2.16.840.1.101.3.4.4.1")
-///
-/// # Returns
-/// DER-encoded OID bytes
+/// * `out` - Output buffer to write encoded bytes to
 ///
 /// # Errors
 /// Returns an error if the OID format is invalid
-pub fn encode_oid(oid: &str) -> Result<Vec<u8>> {
+pub fn encode_oid_to(oid: &str, out: &mut Vec<u8>) -> Result<()> {
     if oid.is_empty() || oid.trim().is_empty() {
         return Err(Error::InvalidOid("empty string".to_string()));
     }
 
-    let parts: Vec<&str> = oid.split('.').collect();
+    let mut parts = oid.split('.');
 
-    if parts.len() < 2 {
-        return Err(Error::InvalidOid("must have at least 2 arcs".to_string()));
-    }
+    // Parse first arc
+    let first_str = parts.next().ok_or_else(|| Error::InvalidOid("empty string".to_string()))?;
+    let first = parse_arc(first_str)?;
 
-    let mut arcs = Vec::with_capacity(parts.len());
-    for part in &parts {
-        let num: u64 = part
-            .parse()
-            .map_err(|_| Error::InvalidOid(format!("non-numeric arc \"{}\"", part)))?;
-
-        // Verify the string representation matches (no leading zeros, etc.)
-        if *part != num.to_string() {
-            return Err(Error::InvalidOid(format!("non-numeric arc \"{}\"", part)));
-        }
-
-        arcs.push(num);
-    }
-
-    let first = arcs[0];
-    let second = arcs[1];
+    // Parse second arc
+    let second_str = parts
+        .next()
+        .ok_or_else(|| Error::InvalidOid("must have at least 2 arcs".to_string()))?;
+    let second = parse_arc(second_str)?;
 
     // First arc must be 0, 1, or 2
     if first > 2 {
@@ -84,19 +89,35 @@ pub fn encode_oid(oid: &str) -> Result<Vec<u8>> {
         )));
     }
 
-    // Combine first two arcs
-    let combined = first * 40 + second;
-
-    let mut result = Vec::new();
-
-    // Encode combined first two arcs
-    result.extend(encode_arc(combined));
+    // Encode combined first two arcs (use checked arithmetic to prevent overflow)
+    let combined = first
+        .checked_mul(40)
+        .and_then(|v| v.checked_add(second))
+        .ok_or_else(|| Error::InvalidOid("arc value overflow".to_string()))?;
+    encode_arc(combined, out);
 
     // Encode remaining arcs
-    for arc in arcs.iter().skip(2) {
-        result.extend(encode_arc(*arc));
+    for part in parts {
+        let arc = parse_arc(part)?;
+        encode_arc(arc, out);
     }
 
+    Ok(())
+}
+
+/// Encode an OID string to DER bytes (without the tag and length).
+///
+/// # Arguments
+/// * `oid` - OID string in dotted notation (e.g., "2.16.840.1.101.3.4.4.1")
+///
+/// # Returns
+/// DER-encoded OID bytes
+///
+/// # Errors
+/// Returns an error if the OID format is invalid
+pub fn encode_oid(oid: &str) -> Result<Vec<u8>> {
+    let mut result = Vec::new();
+    encode_oid_to(oid, &mut result)?;
     Ok(result)
 }
 
@@ -118,9 +139,18 @@ pub fn decode_oid(bytes: &[u8]) -> Result<String> {
     let mut arcs = Vec::new();
     let mut i = 0;
 
+    // Max continuation bytes for u64: ceil(64/7) = 10
+    const MAX_ARC_BYTES: usize = 10;
+
     // Decode first byte(s) (combined first two arcs)
     let mut value: u64 = 0;
+    let mut arc_bytes = 0;
     while i < bytes.len() {
+        arc_bytes += 1;
+        if arc_bytes > MAX_ARC_BYTES {
+            return Err(Error::InvalidOidBytes("arc value too large".to_string()));
+        }
+
         let byte = bytes[i];
         value = (value << 7) | ((byte & 0x7f) as u64);
         i += 1;
@@ -153,9 +183,15 @@ pub fn decode_oid(bytes: &[u8]) -> Result<String> {
     // Decode remaining arcs
     while i < bytes.len() {
         value = 0;
+        arc_bytes = 0;
         let start_index = i;
 
         while i < bytes.len() {
+            arc_bytes += 1;
+            if arc_bytes > MAX_ARC_BYTES {
+                return Err(Error::InvalidOidBytes("arc value too large".to_string()));
+            }
+
             let byte = bytes[i];
             value = (value << 7) | ((byte & 0x7f) as u64);
             i += 1;
