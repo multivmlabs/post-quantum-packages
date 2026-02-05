@@ -1,0 +1,55 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - '*/python@*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse tag
+        id: tag
+        run: |
+          # Tag format: pq-oid/python@1.0.0
+          TAG="${GITHUB_REF_NAME}"
+          PACKAGE="${TAG%%/python@*}"    # pq-oid
+          VERSION="${TAG##*/python@}"    # 1.0.0
+          echo "package=$PACKAGE" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing $PACKAGE version $VERSION to PyPI"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Verify version matches
+        working-directory: packages/${{ steps.tag.outputs.package }}/python
+        run: |
+          PYPROJECT_VERSION=$(grep '^version' pyproject.toml | sed 's/.*"\(.*\)"/\1/')
+          if [ "$PYPROJECT_VERSION" != "${{ steps.tag.outputs.version }}" ]; then
+            echo "::error::Tag version (${{ steps.tag.outputs.version }}) doesn't match pyproject.toml ($PYPROJECT_VERSION)"
+            exit 1
+          fi
+          echo "Version verified: $PYPROJECT_VERSION"
+
+      - name: Build
+        working-directory: packages/${{ steps.tag.outputs.package }}/python
+        run: python -m build
+
+      - name: Publish
+        working-directory: packages/${{ steps.tag.outputs.package }}/python
+        run: twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
