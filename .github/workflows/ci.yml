@@ -69,10 +69,6 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.has-ts == 'true'
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        package: ${{ fromJson(needs.detect-changes.outputs.ts-packages) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -82,18 +78,30 @@ jobs:
       - name: Install dependencies
         run: bun ci
 
-      - name: Build
-        working-directory: packages/${{ matrix.package }}/ts
-        run: bun run build
-
-      - name: Test
-        working-directory: packages/${{ matrix.package }}/ts
+      - name: Build and test changed packages
         run: |
-          if jq -e '.scripts.test' package.json >/dev/null; then
-            bun run test
-          else
-            echo "No test script found, skipping"
-          fi
+          TS_PACKAGES='${{ needs.detect-changes.outputs.ts-packages }}'
+          echo "$TS_PACKAGES" | jq -r '.[]' | while read -r pkg; do
+            echo "==> $pkg"
+            if [ -d "packages/$pkg/ts" ]; then
+              (
+                cd "packages/$pkg/ts"
+                if jq -e '.scripts.build' package.json >/dev/null; then
+                  bun run build
+                else
+                  echo "No build script found, skipping"
+                fi
+                if jq -e '.scripts.test' package.json >/dev/null; then
+                  bun run test
+                else
+                  echo "No test script found, skipping"
+                fi
+              )
+            else
+              echo "Package path packages/$pkg/ts not found"
+              exit 1
+            fi
+          done
 
   test-rust:
     needs: detect-changes
