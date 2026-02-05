@@ -192,7 +192,12 @@ jobs:
   ci-success:
     runs-on: ubuntu-latest
     needs: [detect-changes, test-typescript, test-rust, test-python]
-    if: always()
+    if: |
+      needs.detect-changes.result == 'success' && (
+        needs.detect-changes.outputs.has-ts == 'true' ||
+        needs.detect-changes.outputs.has-rust == 'true' ||
+        needs.detect-changes.outputs.has-python == 'true'
+      )
     steps:
       - name: Check CI status
         run: |
