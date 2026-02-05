@@ -148,8 +148,13 @@ interface PQJwk {
 ## Notes
 
 - Inputs are validated for correct key size and encoding structure
-- DER encoding uses AlgorithmIdentifier with explicit NULL parameters
+- DER encoding uses AlgorithmIdentifier with absent parameters (per NIST PQ specs); decoder accepts both absent and NULL for interoperability
 - JWK uses non-standard `kty: 'PQC'` for post-quantum keys
+- `fromJWK` returns only private key bytes when both `x` and `d` are present (public key is validated but not returned). To get both keys, parse separately:
+  ```typescript
+  const privateKey = fromJWK(jwk);
+  const publicKey = fromJWK({ kty: jwk.kty, alg: jwk.alg, x: jwk.x });
+  ```
 
 ## License
 

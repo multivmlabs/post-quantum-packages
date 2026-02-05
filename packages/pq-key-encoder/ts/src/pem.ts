@@ -57,7 +57,12 @@ export function fromPEM(pem: string): KeyData {
   const decoded = decodeBase64(body);
 
   if (label === 'PUBLIC KEY' || label === 'PRIVATE KEY') {
-    return fromDER(decoded);
+    const key = fromDER(decoded);
+    const expectedType = label === 'PUBLIC KEY' ? 'public' : 'private';
+    if (key.type !== expectedType) {
+      throw new InvalidEncodingError(`PEM label "${label}" does not match key type "${key.type}".`);
+    }
+    return key;
   }
 
   throw new InvalidEncodingError(`Unsupported PEM label: ${label}.`);

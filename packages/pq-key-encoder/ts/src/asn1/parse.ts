@@ -128,18 +128,39 @@ function parseAlgorithmIdentifier(
   return { oid, bytesRead: algorithm.bytesRead };
 }
 
+// Context-specific tags for optional PKCS#8 fields (RFC 5958 OneAsymmetricKey)
+const TAG_CONTEXT_0 = 0xa0; // [0] Attributes OPTIONAL
+const TAG_CONTEXT_1 = 0xa1; // [1] PublicKey OPTIONAL
+
+/** Skip optional trailing context-specific fields in PKCS#8/OneAsymmetricKey. */
+function scanOptionalTrailingFields(
+  sequence: Uint8Array,
+  offset: number,
+): { hasPublicKey: boolean } {
+  let currentOffset = offset;
+  let hasPublicKey = false;
+  while (currentOffset < sequence.length) {
+    const tlv = readTLV(sequence, currentOffset);
+    if (tlv.tag !== TAG_CONTEXT_0 && tlv.tag !== TAG_CONTEXT_1) {
+      throw new InvalidEncodingError('Unexpected trailing data in key sequence.');
+    }
+    if (tlv.tag === TAG_CONTEXT_1) {
+      hasPublicKey = true;
+    }
+    currentOffset += tlv.bytesRead;
+  }
+  return { hasPublicKey };
+}
+
 /** Parse the key TLV and infer key type from its tag. */
 function parseKeyTlv(
   sequence: Uint8Array,
   offset: number,
-): { keyBytes: Uint8Array; keyType: 'public' | 'private' } {
+): { keyBytes: Uint8Array; keyType: 'public' | 'private'; bytesRead: number } {
   if (offset >= sequence.length) {
     throw new InvalidEncodingError('Missing key data.');
   }
   const keyTlv = readTLV(sequence, offset);
-  if (offset + keyTlv.bytesRead !== sequence.length) {
-    throw new InvalidEncodingError('Unexpected trailing data in key sequence.');
-  }
 
   if (keyTlv.tag === TAG_BIT_STRING) {
     if (keyTlv.value.length === 0) {
@@ -149,10 +170,10 @@ function parseKeyTlv(
     if (unusedBits !== 0) {
       throw new InvalidEncodingError('BIT STRING unused bits must be 0 for key data.');
     }
-    return { keyBytes: keyTlv.value.slice(1), keyType: 'public' };
+    return { keyBytes: keyTlv.value.slice(1), keyType: 'public', bytesRead: keyTlv.bytesRead };
   }
   if (keyTlv.tag === TAG_OCTET_STRING) {
-    return { keyBytes: keyTlv.value, keyType: 'private' };
+    return { keyBytes: keyTlv.value, keyType: 'private', bytesRead: keyTlv.bytesRead };
   }
   throw new InvalidEncodingError('Expected BIT STRING or OCTET STRING for key data.');
 }
@@ -174,22 +195,43 @@ export function parseAlgorithmAndKeyWithType(input: Uint8Array): {
   const sequence = outer.value;
   const first = readTLV(sequence, 0);
   let algorithmOffset = 0;
-  let expectedKeyType: 'public' | 'private' | undefined;
+  let version: number | null = null;
 
   if (first.tag === TAG_INTEGER) {
-    if (first.value.length !== 1 || first.value[0] !== 0x00) {
+    // RFC 5958: version 0 = PKCS#8, version 1 = OneAsymmetricKey with optional publicKey
+    const versionValue = first.value.length === 1 ? first.value[0] : -1;
+    if (versionValue !== 0 && versionValue !== 1) {
       throw new InvalidEncodingError('Unsupported PrivateKeyInfo version.');
     }
     algorithmOffset = first.bytesRead;
-    expectedKeyType = 'private';
+    version = versionValue;
   }
 
   const { oid, bytesRead } = parseAlgorithmIdentifier(sequence, algorithmOffset);
   const keyOffset = algorithmOffset + bytesRead;
-  const { keyBytes, keyType } = parseKeyTlv(sequence, keyOffset);
+  const { keyBytes, keyType, bytesRead: keyBytesRead } = parseKeyTlv(sequence, keyOffset);
 
-  if (expectedKeyType && keyType !== expectedKeyType) {
-    throw new InvalidEncodingError('Unexpected key type for PrivateKeyInfo.');
+  // PKCS#8 private keys must have version INTEGER
+  if (keyType === 'private' && version === null) {
+    throw new InvalidEncodingError('PKCS#8 private key missing version INTEGER.');
+  }
+
+  // SPKI public keys must not have version INTEGER
+  if (keyType === 'public' && version !== null) {
+    throw new InvalidEncodingError('SPKI public key has unexpected version INTEGER.');
+  }
+
+  // Allow optional trailing fields for PKCS#8 (attributes, publicKey)
+  const trailingOffset = keyOffset + keyBytesRead;
+  if (trailingOffset < sequence.length) {
+    if (keyType === 'private') {
+      const { hasPublicKey } = scanOptionalTrailingFields(sequence, trailingOffset);
+      if (hasPublicKey && version !== 1) {
+        throw new InvalidEncodingError('PKCS#8 publicKey requires version 1.');
+      }
+    } else {
+      throw new InvalidEncodingError('Unexpected trailing data in SPKI.');
+    }
   }
 
   return { oid, keyBytes, keyType };

@@ -86,4 +86,23 @@ describe('pkcs8', () => {
       bytes: rawKey,
     });
   });
+
+  it('extracts raw key from RFC 8410-style inner OCTET STRING', () => {
+    // RFC 8410 style: privateKey = OCTET STRING { OCTET STRING { raw_bytes } }
+    const rawKey = makeKey(1632, 9);
+    const algorithm = encodeAlgorithmIdentifier('ML-KEM-512');
+    // Double-wrapped: outer OCTET STRING contains DER of inner OCTET STRING
+    const innerOctetString = encodeOctetString(rawKey);
+    const pkcs8 = encodeSequence([
+      encodeInteger(0),
+      algorithm,
+      encodeOctetString(innerOctetString),
+    ]);
+
+    expect(fromPKCS8(pkcs8)).toEqual({
+      alg: 'ML-KEM-512',
+      type: 'private',
+      bytes: rawKey,
+    });
+  });
 });

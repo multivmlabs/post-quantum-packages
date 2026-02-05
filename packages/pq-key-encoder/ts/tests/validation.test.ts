@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import {
   encodeBitString,
+  encodeInteger,
   encodeNull,
   encodeObjectIdentifier,
   encodeOctetString,
@@ -56,9 +57,10 @@ function makeSpki(oid: string, keyBytes: Uint8Array): Uint8Array {
 }
 
 function makePkcs8(oid: string, keyBytes: Uint8Array): Uint8Array {
+  const version = encodeInteger(0);
   const algorithm = encodeSequence([encodeObjectIdentifier(oid), encodeNull()]);
   const privateKey = encodeOctetString(keyBytes);
-  return encodeSequence([algorithm, privateKey]);
+  return encodeSequence([version, algorithm, privateKey]);
 }
 
 describe('validation', () => {

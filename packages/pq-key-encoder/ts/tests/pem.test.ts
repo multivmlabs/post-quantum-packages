@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test';
+import { InvalidEncodingError } from '../src/errors';
 import * as api from '../src/index';
 import { toPKCS8 } from '../src/pkcs8';
 import { toSPKI } from '../src/spki';
@@ -93,5 +94,15 @@ describe('pem', () => {
       type: 'public',
       bytes: key,
     });
+  });
+
+  it('rejects PEM when label does not match key type', () => {
+    const key = makeKey(1632, 5);
+    const pkcs8 = toPKCS8({ alg: 'ML-KEM-512', type: 'private', bytes: key });
+    const encoded = encodeBase64(pkcs8);
+    const pem = ['-----BEGIN PUBLIC KEY-----', encoded, '-----END PUBLIC KEY-----'].join('\n');
+
+    const { fromPEM } = api as unknown as PemApi;
+    expect(() => fromPEM(pem)).toThrow(InvalidEncodingError);
   });
 });

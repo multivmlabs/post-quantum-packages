@@ -48,6 +48,17 @@ export function normalizePrivateKeyBytes(alg: KeyData['alg'], keyBytes: Uint8Arr
   }
 
   const outer = readTLV(keyBytes);
+
+  // RFC 8410-style: single inner OCTET STRING containing raw key
+  if (
+    outer.tag === TAG_OCTET_STRING &&
+    outer.bytesRead === keyBytes.length &&
+    outer.value.length === expected
+  ) {
+    return outer.value;
+  }
+
+  // OpenSSL-style: SEQUENCE containing seed + expanded key as OCTET STRINGs
   if (outer.tag !== TAG_SEQUENCE || outer.bytesRead !== keyBytes.length) {
     return keyBytes;
   }
