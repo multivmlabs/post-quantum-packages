@@ -1,6 +1,6 @@
 {
   "name": "pq-oid",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "OID constants for all PQ algorithms (ML-KEM, ML-DSA, SLH-DSA)",
   "type": "module",
   "main": "./dist/index.js",
