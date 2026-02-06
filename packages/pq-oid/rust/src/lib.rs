@@ -117,12 +117,18 @@ pub mod oid {
     pub const SLH_DSA_SHA2_256F: &str = "2.16.840.1.101.3.4.3.25";
 
     // SLH-DSA SHA2 DER-encoded bytes
-    pub const SLH_DSA_SHA2_128S_BYTES: &[u8] = &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x14];
-    pub const SLH_DSA_SHA2_128F_BYTES: &[u8] = &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x15];
-    pub const SLH_DSA_SHA2_192S_BYTES: &[u8] = &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x16];
-    pub const SLH_DSA_SHA2_192F_BYTES: &[u8] = &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x17];
-    pub const SLH_DSA_SHA2_256S_BYTES: &[u8] = &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x18];
-    pub const SLH_DSA_SHA2_256F_BYTES: &[u8] = &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x19];
+    pub const SLH_DSA_SHA2_128S_BYTES: &[u8] =
+        &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x14];
+    pub const SLH_DSA_SHA2_128F_BYTES: &[u8] =
+        &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x15];
+    pub const SLH_DSA_SHA2_192S_BYTES: &[u8] =
+        &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x16];
+    pub const SLH_DSA_SHA2_192F_BYTES: &[u8] =
+        &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x17];
+    pub const SLH_DSA_SHA2_256S_BYTES: &[u8] =
+        &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x18];
+    pub const SLH_DSA_SHA2_256F_BYTES: &[u8] =
+        &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x19];
 
     // SLH-DSA SHAKE OIDs (FIPS 205)
     pub const SLH_DSA_SHAKE_128S: &str = "2.16.840.1.101.3.4.3.26";
@@ -133,12 +139,18 @@ pub mod oid {
     pub const SLH_DSA_SHAKE_256F: &str = "2.16.840.1.101.3.4.3.31";
 
     // SLH-DSA SHAKE DER-encoded bytes
-    pub const SLH_DSA_SHAKE_128S_BYTES: &[u8] = &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x1a];
-    pub const SLH_DSA_SHAKE_128F_BYTES: &[u8] = &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x1b];
-    pub const SLH_DSA_SHAKE_192S_BYTES: &[u8] = &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x1c];
-    pub const SLH_DSA_SHAKE_192F_BYTES: &[u8] = &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x1d];
-    pub const SLH_DSA_SHAKE_256S_BYTES: &[u8] = &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x1e];
-    pub const SLH_DSA_SHAKE_256F_BYTES: &[u8] = &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x1f];
+    pub const SLH_DSA_SHAKE_128S_BYTES: &[u8] =
+        &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x1a];
+    pub const SLH_DSA_SHAKE_128F_BYTES: &[u8] =
+        &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x1b];
+    pub const SLH_DSA_SHAKE_192S_BYTES: &[u8] =
+        &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x1c];
+    pub const SLH_DSA_SHAKE_192F_BYTES: &[u8] =
+        &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x1d];
+    pub const SLH_DSA_SHAKE_256S_BYTES: &[u8] =
+        &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x1e];
+    pub const SLH_DSA_SHAKE_256F_BYTES: &[u8] =
+        &[0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x1f];
 }
 
 #[cfg(test)]
@@ -277,31 +289,70 @@ mod tests {
     #[test]
     fn test_oid_bytes_constants() {
         // Verify ALL pre-computed bytes match runtime encoding
-        
+
         // ML-KEM
         assert_eq!(encode_oid(oid::ML_KEM_512).unwrap(), oid::ML_KEM_512_BYTES);
         assert_eq!(encode_oid(oid::ML_KEM_768).unwrap(), oid::ML_KEM_768_BYTES);
-        assert_eq!(encode_oid(oid::ML_KEM_1024).unwrap(), oid::ML_KEM_1024_BYTES);
-        
+        assert_eq!(
+            encode_oid(oid::ML_KEM_1024).unwrap(),
+            oid::ML_KEM_1024_BYTES
+        );
+
         // ML-DSA
         assert_eq!(encode_oid(oid::ML_DSA_44).unwrap(), oid::ML_DSA_44_BYTES);
         assert_eq!(encode_oid(oid::ML_DSA_65).unwrap(), oid::ML_DSA_65_BYTES);
         assert_eq!(encode_oid(oid::ML_DSA_87).unwrap(), oid::ML_DSA_87_BYTES);
-        
+
         // SLH-DSA SHA2
-        assert_eq!(encode_oid(oid::SLH_DSA_SHA2_128S).unwrap(), oid::SLH_DSA_SHA2_128S_BYTES);
-        assert_eq!(encode_oid(oid::SLH_DSA_SHA2_128F).unwrap(), oid::SLH_DSA_SHA2_128F_BYTES);
-        assert_eq!(encode_oid(oid::SLH_DSA_SHA2_192S).unwrap(), oid::SLH_DSA_SHA2_192S_BYTES);
-        assert_eq!(encode_oid(oid::SLH_DSA_SHA2_192F).unwrap(), oid::SLH_DSA_SHA2_192F_BYTES);
-        assert_eq!(encode_oid(oid::SLH_DSA_SHA2_256S).unwrap(), oid::SLH_DSA_SHA2_256S_BYTES);
-        assert_eq!(encode_oid(oid::SLH_DSA_SHA2_256F).unwrap(), oid::SLH_DSA_SHA2_256F_BYTES);
-        
+        assert_eq!(
+            encode_oid(oid::SLH_DSA_SHA2_128S).unwrap(),
+            oid::SLH_DSA_SHA2_128S_BYTES
+        );
+        assert_eq!(
+            encode_oid(oid::SLH_DSA_SHA2_128F).unwrap(),
+            oid::SLH_DSA_SHA2_128F_BYTES
+        );
+        assert_eq!(
+            encode_oid(oid::SLH_DSA_SHA2_192S).unwrap(),
+            oid::SLH_DSA_SHA2_192S_BYTES
+        );
+        assert_eq!(
+            encode_oid(oid::SLH_DSA_SHA2_192F).unwrap(),
+            oid::SLH_DSA_SHA2_192F_BYTES
+        );
+        assert_eq!(
+            encode_oid(oid::SLH_DSA_SHA2_256S).unwrap(),
+            oid::SLH_DSA_SHA2_256S_BYTES
+        );
+        assert_eq!(
+            encode_oid(oid::SLH_DSA_SHA2_256F).unwrap(),
+            oid::SLH_DSA_SHA2_256F_BYTES
+        );
+
         // SLH-DSA SHAKE
-        assert_eq!(encode_oid(oid::SLH_DSA_SHAKE_128S).unwrap(), oid::SLH_DSA_SHAKE_128S_BYTES);
-        assert_eq!(encode_oid(oid::SLH_DSA_SHAKE_128F).unwrap(), oid::SLH_DSA_SHAKE_128F_BYTES);
-        assert_eq!(encode_oid(oid::SLH_DSA_SHAKE_192S).unwrap(), oid::SLH_DSA_SHAKE_192S_BYTES);
-        assert_eq!(encode_oid(oid::SLH_DSA_SHAKE_192F).unwrap(), oid::SLH_DSA_SHAKE_192F_BYTES);
-        assert_eq!(encode_oid(oid::SLH_DSA_SHAKE_256S).unwrap(), oid::SLH_DSA_SHAKE_256S_BYTES);
-        assert_eq!(encode_oid(oid::SLH_DSA_SHAKE_256F).unwrap(), oid::SLH_DSA_SHAKE_256F_BYTES);
+        assert_eq!(
+            encode_oid(oid::SLH_DSA_SHAKE_128S).unwrap(),
+            oid::SLH_DSA_SHAKE_128S_BYTES
+        );
+        assert_eq!(
+            encode_oid(oid::SLH_DSA_SHAKE_128F).unwrap(),
+            oid::SLH_DSA_SHAKE_128F_BYTES
+        );
+        assert_eq!(
+            encode_oid(oid::SLH_DSA_SHAKE_192S).unwrap(),
+            oid::SLH_DSA_SHAKE_192S_BYTES
+        );
+        assert_eq!(
+            encode_oid(oid::SLH_DSA_SHAKE_192F).unwrap(),
+            oid::SLH_DSA_SHAKE_192F_BYTES
+        );
+        assert_eq!(
+            encode_oid(oid::SLH_DSA_SHAKE_256S).unwrap(),
+            oid::SLH_DSA_SHAKE_256S_BYTES
+        );
+        assert_eq!(
+            encode_oid(oid::SLH_DSA_SHAKE_256F).unwrap(),
+            oid::SLH_DSA_SHAKE_256F_BYTES
+        );
     }
 }

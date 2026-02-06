@@ -639,9 +639,15 @@ impl SlhDsa {
     #[inline]
     pub const fn security_level(&self) -> SecurityLevel {
         match self {
-            SlhDsa::Sha2_128s | SlhDsa::Sha2_128f | SlhDsa::Shake128s | SlhDsa::Shake128f => SecurityLevel::Level1,
-            SlhDsa::Sha2_192s | SlhDsa::Sha2_192f | SlhDsa::Shake192s | SlhDsa::Shake192f => SecurityLevel::Level3,
-            SlhDsa::Sha2_256s | SlhDsa::Sha2_256f | SlhDsa::Shake256s | SlhDsa::Shake256f => SecurityLevel::Level5,
+            SlhDsa::Sha2_128s | SlhDsa::Sha2_128f | SlhDsa::Shake128s | SlhDsa::Shake128f => {
+                SecurityLevel::Level1
+            }
+            SlhDsa::Sha2_192s | SlhDsa::Sha2_192f | SlhDsa::Shake192s | SlhDsa::Shake192f => {
+                SecurityLevel::Level3
+            }
+            SlhDsa::Sha2_256s | SlhDsa::Sha2_256f | SlhDsa::Shake256s | SlhDsa::Shake256f => {
+                SecurityLevel::Level5
+            }
         }
     }
 
@@ -1105,7 +1111,10 @@ mod tests {
         assert_eq!(info.public_key_size, 800);
         assert!(matches!(
             info.sizes,
-            AlgorithmSizes::Kem { ciphertext_size: 768, .. }
+            AlgorithmSizes::Kem {
+                ciphertext_size: 768,
+                ..
+            }
         ));
     }
 

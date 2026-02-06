@@ -77,7 +77,9 @@ pub fn encode_oid_to(oid: &str, out: &mut Vec<u8>) -> Result<()> {
 
     // When first arc is 0 or 1, second arc must be < 40
     if first < 2 && second > 39 {
-        return Err(Error::InvalidOid("second arc must be <= 39 when first arc is 0 or 1"));
+        return Err(Error::InvalidOid(
+            "second arc must be <= 39 when first arc is 0 or 1",
+        ));
     }
 
     // Encode combined first two arcs (use checked arithmetic to prevent overflow)
