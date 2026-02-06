@@ -1,13 +1,18 @@
 name: Publish to PyPI
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches-ignore:
+      - '**'
     tags:
       - '*/python@*'
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
     permissions:
       id-token: write
     steps:
@@ -17,7 +22,7 @@ jobs:
         id: tag
         run: |
           # Tag format: pq-oid/python@1.0.0
-          TAG="${GITHUB_REF_NAME}"
+          TAG="${{ github.event.workflow_run.head_branch }}"
           PACKAGE="${TAG%%/python@*}"    # pq-oid
           VERSION="${TAG##*/python@}"    # 1.0.0
           echo "package=$PACKAGE" >> $GITHUB_OUTPUT

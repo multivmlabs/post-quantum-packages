@@ -1,13 +1,18 @@
 name: Publish to npm
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches-ignore:
+      - '**'
     tags:
       - '*/ts@*'
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
     permissions:
       contents: read
       id-token: write
@@ -18,7 +23,7 @@ jobs:
         id: tag
         run: |
           # Tag format: pq-oid/ts@1.0.0
-          TAG="${GITHUB_REF_NAME}"
+          TAG="${{ github.event.workflow_run.head_branch }}"
           PACKAGE="${TAG%%/ts@*}"        # pq-oid
           VERSION="${TAG##*/ts@}"        # 1.0.0
           echo "package=$PACKAGE" >> $GITHUB_OUTPUT

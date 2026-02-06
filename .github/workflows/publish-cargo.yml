@@ -1,13 +1,18 @@
 name: Publish to crates.io
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches-ignore:
+      - '**'
     tags:
       - '*/rust@*'
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
 
@@ -15,7 +20,7 @@ jobs:
         id: tag
         run: |
           # Tag format: pq-oid/rust@1.0.0
-          TAG="${GITHUB_REF_NAME}"
+          TAG="${{ github.event.workflow_run.head_branch }}"
           PACKAGE="${TAG%%/rust@*}"      # pq-oid
           VERSION="${TAG##*/rust@}"      # 1.0.0
           echo "package=$PACKAGE" >> $GITHUB_OUTPUT
