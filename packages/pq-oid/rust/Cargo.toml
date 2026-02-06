@@ -1,6 +1,6 @@
 [package]
 name = "pq-oid"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2021"
 description = "OID constants for all PQ algorithms (ML-KEM, ML-DSA, SLH-DSA)"
 license = "MIT"
