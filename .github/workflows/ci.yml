@@ -110,7 +110,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        toolchain: [stable, beta, '1.75']
+        toolchain: [stable, beta, '1.78']
         package: ${{ fromJson(needs.detect-changes.outputs.rust-packages) }}
     steps:
       - uses: actions/checkout@v4
