@@ -185,7 +185,7 @@ async function main() {
 	await $`git commit -m "chore(${pkg}): bump ${language} version to ${newVersion}"`;
 	console.log("Created commit");
 
-	await $`git tag ${tag}`;
+	await $`git tag -a ${tag} -m ${tag}`;
 	console.log(`Created tag: ${tag}`);
 
 	console.log();
