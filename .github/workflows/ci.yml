@@ -3,10 +3,6 @@ name: CI
 on:
   push:
     branches: [main]
-    tags:
-      - '*/ts@*'
-      - '*/rust@*'
-      - '*/python@*'
   pull_request:
     branches: [main]
 
@@ -32,10 +28,7 @@ jobs:
       - name: Detect changed packages
         id: changes
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            # On tag push, compare with previous commit
-            BASE_SHA="${{ github.event.before }}"
-          elif [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
             # On push to main, compare with previous commit
             BASE_SHA="${{ github.event.before }}"
           else

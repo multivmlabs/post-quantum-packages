@@ -1,34 +1,62 @@
 name: Publish to npm
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches-ignore:
-      - '**'
+  push:
     tags:
       - '*/ts@*'
 
 jobs:
-  publish:
+  parse-tag:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
-    permissions:
-      contents: read
-      id-token: write
+    outputs:
+      package: ${{ steps.tag.outputs.package }}
+      version: ${{ steps.tag.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
-
       - name: Parse tag
         id: tag
         run: |
           # Tag format: pq-oid/ts@1.0.0
-          TAG="${{ github.event.workflow_run.head_branch }}"
+          TAG="${GITHUB_REF_NAME}"
           PACKAGE="${TAG%%/ts@*}"        # pq-oid
           VERSION="${TAG##*/ts@}"        # 1.0.0
           echo "package=$PACKAGE" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Publishing $PACKAGE version $VERSION to npm"
+
+  test:
+    needs: parse-tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun ci
+
+      - name: Build and test
+        run: |
+          cd "packages/${{ needs.parse-tag.outputs.package }}/ts"
+          if jq -e '.scripts.build' package.json >/dev/null; then
+            bun run build
+          else
+            echo "No build script found, skipping"
+          fi
+          if jq -e '.scripts.test' package.json >/dev/null; then
+            bun run test
+          else
+            echo "No test script found, skipping"
+          fi
+
+  publish:
+    needs: [parse-tag, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -37,21 +65,21 @@ jobs:
         run: bun ci
 
       - name: Build
-        working-directory: packages/${{ steps.tag.outputs.package }}/ts
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/ts
         run: bun run build
 
       - name: Verify version matches
-        working-directory: packages/${{ steps.tag.outputs.package }}/ts
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/ts
         run: |
           PKG_VERSION=$(jq -r .version package.json)
-          if [ "$PKG_VERSION" != "${{ steps.tag.outputs.version }}" ]; then
-            echo "::error::Tag version (${{ steps.tag.outputs.version }}) doesn't match package.json ($PKG_VERSION)"
+          if [ "$PKG_VERSION" != "${{ needs.parse-tag.outputs.version }}" ]; then
+            echo "::error::Tag version (${{ needs.parse-tag.outputs.version }}) doesn't match package.json ($PKG_VERSION)"
             exit 1
           fi
           echo "Version verified: $PKG_VERSION"
 
       - name: Publish
-        working-directory: packages/${{ steps.tag.outputs.package }}/ts
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/ts
         run: bun publish --access public
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}

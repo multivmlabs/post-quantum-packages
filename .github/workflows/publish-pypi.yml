@@ -1,33 +1,73 @@
 name: Publish to PyPI
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches-ignore:
-      - '**'
+  push:
     tags:
       - '*/python@*'
 
 jobs:
-  publish:
+  parse-tag:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
-    permissions:
-      id-token: write
+    outputs:
+      package: ${{ steps.tag.outputs.package }}
+      version: ${{ steps.tag.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
-
       - name: Parse tag
         id: tag
         run: |
           # Tag format: pq-oid/python@1.0.0
-          TAG="${{ github.event.workflow_run.head_branch }}"
+          TAG="${GITHUB_REF_NAME}"
           PACKAGE="${TAG%%/python@*}"    # pq-oid
           VERSION="${TAG##*/python@}"    # 1.0.0
           echo "package=$PACKAGE" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Publishing $PACKAGE version $VERSION to PyPI"
+
+  test:
+    needs: parse-tag
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pytest pytest-cov build
+
+      - name: Install package
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/python
+        run: pip install -e .
+
+      - name: Lint with ruff
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/python
+        run: ruff check .
+
+      - name: Test with pytest
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/python
+        run: |
+          if [ -d "tests" ]; then
+            pytest tests -v
+          else
+            echo "No tests directory found, skipping"
+          fi
+
+  publish:
+    needs: [parse-tag, test]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -39,21 +79,21 @@ jobs:
         run: pip install build twine
 
       - name: Verify version matches
-        working-directory: packages/${{ steps.tag.outputs.package }}/python
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/python
         run: |
           PYPROJECT_VERSION=$(grep '^version' pyproject.toml | sed 's/.*"\(.*\)"/\1/')
-          if [ "$PYPROJECT_VERSION" != "${{ steps.tag.outputs.version }}" ]; then
-            echo "::error::Tag version (${{ steps.tag.outputs.version }}) doesn't match pyproject.toml ($PYPROJECT_VERSION)"
+          if [ "$PYPROJECT_VERSION" != "${{ needs.parse-tag.outputs.version }}" ]; then
+            echo "::error::Tag version (${{ needs.parse-tag.outputs.version }}) doesn't match pyproject.toml ($PYPROJECT_VERSION)"
             exit 1
           fi
           echo "Version verified: $PYPROJECT_VERSION"
 
       - name: Build
-        working-directory: packages/${{ steps.tag.outputs.package }}/python
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/python
         run: python -m build
 
       - name: Publish
-        working-directory: packages/${{ steps.tag.outputs.package }}/python
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/python
         run: twine upload dist/*
         env:
           TWINE_USERNAME: __token__

@@ -1,31 +1,77 @@
 name: Publish to crates.io
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches-ignore:
-      - '**'
+  push:
     tags:
       - '*/rust@*'
 
 jobs:
-  publish:
+  parse-tag:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
+    outputs:
+      package: ${{ steps.tag.outputs.package }}
+      version: ${{ steps.tag.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
-
       - name: Parse tag
         id: tag
         run: |
           # Tag format: pq-oid/rust@1.0.0
-          TAG="${{ github.event.workflow_run.head_branch }}"
+          TAG="${GITHUB_REF_NAME}"
           PACKAGE="${TAG%%/rust@*}"      # pq-oid
           VERSION="${TAG##*/rust@}"      # 1.0.0
           echo "package=$PACKAGE" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Publishing $PACKAGE version $VERSION to crates.io"
+
+  test:
+    needs: parse-tag
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        toolchain: [stable, beta, '1.78']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust ${{ matrix.toolchain }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/
+            ~/.cargo/git/
+            target/
+          key: cargo-${{ runner.os }}-${{ matrix.toolchain }}-${{ needs.parse-tag.outputs.package }}-${{ hashFiles(format('packages/{0}/rust/Cargo.toml', needs.parse-tag.outputs.package)) }}
+          restore-keys: |
+            cargo-${{ runner.os }}-${{ matrix.toolchain }}-${{ needs.parse-tag.outputs.package }}-
+            cargo-${{ runner.os }}-${{ matrix.toolchain }}-
+
+      - name: Check formatting
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/rust
+        run: cargo fmt -- --check
+
+      - name: Clippy
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/rust
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Build
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/rust
+        run: cargo build --all-targets
+
+      - name: Test
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/rust
+        run: cargo test
+
+  publish:
+    needs: [parse-tag, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -43,15 +89,15 @@ jobs:
 
       - name: Verify version matches
         run: |
-          CARGO_VERSION=$(grep '^version' packages/${{ steps.tag.outputs.package }}/rust/Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
-          if [ "$CARGO_VERSION" != "${{ steps.tag.outputs.version }}" ]; then
-            echo "::error::Tag version (${{ steps.tag.outputs.version }}) doesn't match Cargo.toml ($CARGO_VERSION)"
+          CARGO_VERSION=$(grep '^version' packages/${{ needs.parse-tag.outputs.package }}/rust/Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          if [ "$CARGO_VERSION" != "${{ needs.parse-tag.outputs.version }}" ]; then
+            echo "::error::Tag version (${{ needs.parse-tag.outputs.version }}) doesn't match Cargo.toml ($CARGO_VERSION)"
             exit 1
           fi
           echo "Version verified: $CARGO_VERSION"
 
       - name: Publish
-        working-directory: packages/${{ steps.tag.outputs.package }}/rust
+        working-directory: packages/${{ needs.parse-tag.outputs.package }}/rust
         run: cargo publish
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
