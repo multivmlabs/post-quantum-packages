@@ -18,3 +18,7 @@ build/
 .idea/
 .vscode/
 *.swp
+
+# plans
+
+thoughts/shared/plans/*
