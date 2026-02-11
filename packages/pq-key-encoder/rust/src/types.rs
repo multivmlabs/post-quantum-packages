@@ -5,6 +5,7 @@ use pq_oid::Algorithm;
 
 use crate::error::Result;
 use crate::validation::validate_key_size;
+use crate::{der, pkcs8, spki};
 
 /// The type of key (public or private).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -58,6 +59,38 @@ impl<'a> PublicKeyRef<'a> {
         KeyType::Public
     }
 
+    /// Decode an SPKI DER-encoded public key (zero-copy).
+    pub fn from_spki(der: &'a [u8]) -> Result<Self> {
+        let (alg, key_bytes) = spki::decode_spki(der)?;
+        validate_key_size(alg, KeyType::Public, key_bytes)?;
+        Ok(Self {
+            algorithm: alg,
+            bytes: key_bytes,
+        })
+    }
+
+    /// Encode this public key as SPKI DER into the given buffer.
+    pub fn encode_spki_to(&self, out: &mut Vec<u8>) {
+        spki::encode_spki(self.algorithm, self.bytes, out);
+    }
+
+    /// Encode this public key as DER into the given buffer (alias for `encode_spki_to`).
+    pub fn encode_der_to(&self, out: &mut Vec<u8>) {
+        self.encode_spki_to(out);
+    }
+
+    /// Encode this public key as SPKI DER, returning a new `Vec<u8>`.
+    pub fn to_spki(&self) -> Vec<u8> {
+        let mut out = Vec::new();
+        self.encode_spki_to(&mut out);
+        out
+    }
+
+    /// Encode this public key as DER, returning a new `Vec<u8>` (alias for `to_spki`).
+    pub fn to_der(&self) -> Vec<u8> {
+        self.to_spki()
+    }
+
     /// Converts to an owned `PublicKey`.
     pub fn to_owned(&self) -> PublicKey {
         PublicKey {
@@ -97,6 +130,38 @@ impl<'a> PrivateKeyRef<'a> {
     #[inline]
     pub fn key_type(&self) -> KeyType {
         KeyType::Private
+    }
+
+    /// Decode a PKCS8 DER-encoded private key (zero-copy).
+    pub fn from_pkcs8(der: &'a [u8]) -> Result<Self> {
+        let (alg, key_bytes) = pkcs8::decode_pkcs8(der)?;
+        validate_key_size(alg, KeyType::Private, key_bytes)?;
+        Ok(Self {
+            algorithm: alg,
+            bytes: key_bytes,
+        })
+    }
+
+    /// Encode this private key as PKCS8 DER into the given buffer.
+    pub fn encode_pkcs8_to(&self, out: &mut Vec<u8>) {
+        pkcs8::encode_pkcs8(self.algorithm, self.bytes, out);
+    }
+
+    /// Encode this private key as DER into the given buffer (alias for `encode_pkcs8_to`).
+    pub fn encode_der_to(&self, out: &mut Vec<u8>) {
+        self.encode_pkcs8_to(out);
+    }
+
+    /// Encode this private key as PKCS8 DER, returning a new `Vec<u8>`.
+    pub fn to_pkcs8(&self) -> Vec<u8> {
+        let mut out = Vec::new();
+        self.encode_pkcs8_to(&mut out);
+        out
+    }
+
+    /// Encode this private key as DER, returning a new `Vec<u8>` (alias for `to_pkcs8`).
+    pub fn to_der(&self) -> Vec<u8> {
+        self.to_pkcs8()
     }
 
     /// Converts to an owned `PrivateKey`.
@@ -156,6 +221,36 @@ impl PublicKey {
     /// Consumes self and returns the inner byte vector.
     pub fn into_bytes(self) -> Vec<u8> {
         self.bytes
+    }
+
+    /// Decode an SPKI DER-encoded public key into an owned `PublicKey`.
+    pub fn from_spki(der: &[u8]) -> Result<Self> {
+        let (alg, key_bytes) = spki::decode_spki(der)?;
+        validate_key_size(alg, KeyType::Public, key_bytes)?;
+        Ok(Self {
+            algorithm: alg,
+            bytes: key_bytes.to_vec(),
+        })
+    }
+
+    /// Encode this public key as SPKI DER into the given buffer.
+    pub fn encode_spki_to(&self, out: &mut Vec<u8>) {
+        self.as_key_ref().encode_spki_to(out);
+    }
+
+    /// Encode this public key as DER into the given buffer.
+    pub fn encode_der_to(&self, out: &mut Vec<u8>) {
+        self.as_key_ref().encode_der_to(out);
+    }
+
+    /// Encode this public key as SPKI DER, returning a new `Vec<u8>`.
+    pub fn to_spki(&self) -> Vec<u8> {
+        self.as_key_ref().to_spki()
+    }
+
+    /// Encode this public key as DER, returning a new `Vec<u8>`.
+    pub fn to_der(&self) -> Vec<u8> {
+        self.as_key_ref().to_der()
     }
 
     /// Returns a borrowed `PublicKeyRef`.
@@ -223,6 +318,36 @@ impl PrivateKey {
     /// Consumes self and returns the inner byte vector.
     pub fn into_bytes(self) -> Vec<u8> {
         self.bytes
+    }
+
+    /// Decode a PKCS8 DER-encoded private key into an owned `PrivateKey`.
+    pub fn from_pkcs8(der: &[u8]) -> Result<Self> {
+        let (alg, key_bytes) = pkcs8::decode_pkcs8(der)?;
+        validate_key_size(alg, KeyType::Private, key_bytes)?;
+        Ok(Self {
+            algorithm: alg,
+            bytes: key_bytes.to_vec(),
+        })
+    }
+
+    /// Encode this private key as PKCS8 DER into the given buffer.
+    pub fn encode_pkcs8_to(&self, out: &mut Vec<u8>) {
+        self.as_key_ref().encode_pkcs8_to(out);
+    }
+
+    /// Encode this private key as DER into the given buffer.
+    pub fn encode_der_to(&self, out: &mut Vec<u8>) {
+        self.as_key_ref().encode_der_to(out);
+    }
+
+    /// Encode this private key as PKCS8 DER, returning a new `Vec<u8>`.
+    pub fn to_pkcs8(&self) -> Vec<u8> {
+        self.as_key_ref().to_pkcs8()
+    }
+
+    /// Encode this private key as DER, returning a new `Vec<u8>`.
+    pub fn to_der(&self) -> Vec<u8> {
+        self.as_key_ref().to_der()
     }
 
     /// Returns a borrowed `PrivateKeyRef`.
@@ -318,6 +443,37 @@ impl Key {
             Key::Private(k) => Some(k),
         }
     }
+
+    /// Decode a DER-encoded key (auto-detecting SPKI or PKCS8).
+    pub fn from_der(der: &[u8]) -> Result<Self> {
+        let (alg, key_type, key_bytes) = der::decode_der(der)?;
+        match key_type {
+            KeyType::Public => {
+                let key = PublicKey::from_bytes(alg, key_bytes)?;
+                Ok(Key::Public(key))
+            }
+            KeyType::Private => {
+                let key = PrivateKey::from_bytes(alg, key_bytes)?;
+                Ok(Key::Private(key))
+            }
+        }
+    }
+
+    /// Encode this key as DER, returning a new `Vec<u8>`.
+    pub fn to_der(&self) -> Vec<u8> {
+        match self {
+            Key::Public(k) => k.to_der(),
+            Key::Private(k) => k.to_der(),
+        }
+    }
+
+    /// Encode this key as DER into the given buffer.
+    pub fn encode_der_to(&self, out: &mut Vec<u8>) {
+        match self {
+            Key::Public(k) => k.encode_der_to(out),
+            Key::Private(k) => k.encode_der_to(out),
+        }
+    }
 }
 
 impl AsRef<[u8]> for Key {
@@ -338,10 +494,18 @@ impl From<PrivateKey> for Key {
     }
 }
 
+impl<'a> TryFrom<&'a [u8]> for Key {
+    type Error = crate::error::Error;
+
+    fn try_from(der: &'a [u8]) -> Result<Self> {
+        Key::from_der(der)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pq_oid::MlKem;
+    use pq_oid::{MlDsa, MlKem, SlhDsa};
 
     #[test]
     fn test_public_key_ref_valid() {
@@ -474,5 +638,167 @@ mod tests {
     fn test_key_type_display() {
         assert_eq!(KeyType::Public.to_string(), "public");
         assert_eq!(KeyType::Private.to_string(), "private");
+    }
+
+    // =========================================================================
+    // DER encoding/decoding tests
+    // =========================================================================
+
+    #[test]
+    fn test_public_key_ref_spki_roundtrip() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0xABu8; 800];
+        let key = PublicKeyRef::new(alg, &bytes).unwrap();
+        let der = key.to_spki();
+        let decoded = PublicKeyRef::from_spki(&der).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.bytes(), &bytes[..]);
+    }
+
+    #[test]
+    fn test_public_key_ref_der_roundtrip() {
+        let alg = Algorithm::MlDsa(MlDsa::Dsa44);
+        let bytes = vec![0xCDu8; 1312];
+        let key = PublicKeyRef::new(alg, &bytes).unwrap();
+        let der = key.to_der();
+        let decoded = PublicKeyRef::from_spki(&der).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.bytes(), &bytes[..]);
+    }
+
+    #[test]
+    fn test_private_key_ref_pkcs8_roundtrip() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0xABu8; 1632];
+        let key = PrivateKeyRef::new(alg, &bytes).unwrap();
+        let der = key.to_pkcs8();
+        let decoded = PrivateKeyRef::from_pkcs8(&der).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.bytes(), &bytes[..]);
+    }
+
+    #[test]
+    fn test_private_key_ref_der_roundtrip() {
+        let alg = Algorithm::SlhDsa(SlhDsa::Sha2_128s);
+        let bytes = vec![0xEFu8; 64];
+        let key = PrivateKeyRef::new(alg, &bytes).unwrap();
+        let der = key.to_der();
+        let decoded = PrivateKeyRef::from_pkcs8(&der).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.bytes(), &bytes[..]);
+    }
+
+    #[test]
+    fn test_public_key_spki_roundtrip() {
+        let alg = Algorithm::MlKem(MlKem::Kem768);
+        let bytes = vec![0x42u8; 1184];
+        let key = PublicKey::new(alg, bytes.clone()).unwrap();
+        let der = key.to_spki();
+        let decoded = PublicKey::from_spki(&der).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.bytes(), &bytes[..]);
+    }
+
+    #[test]
+    fn test_private_key_pkcs8_roundtrip() {
+        let alg = Algorithm::MlDsa(MlDsa::Dsa44);
+        let bytes = vec![0x42u8; 2560];
+        let key = PrivateKey::new(alg, bytes.clone()).unwrap();
+        let der = key.to_pkcs8();
+        let decoded = PrivateKey::from_pkcs8(&der).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.bytes(), &bytes[..]);
+    }
+
+    #[test]
+    fn test_key_from_der_public() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0xAAu8; 800];
+        let key = PublicKey::new(alg, bytes.clone()).unwrap();
+        let der = key.to_der();
+        let decoded = Key::from_der(&der).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.key_type(), KeyType::Public);
+        assert_eq!(decoded.bytes(), &bytes[..]);
+    }
+
+    #[test]
+    fn test_key_from_der_private() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0xBBu8; 1632];
+        let key = PrivateKey::new(alg, bytes.clone()).unwrap();
+        let der = key.to_der();
+        let decoded = Key::from_der(&der).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.key_type(), KeyType::Private);
+        assert_eq!(decoded.bytes(), &bytes[..]);
+    }
+
+    #[test]
+    fn test_key_try_from_bytes() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0xCCu8; 800];
+        let key = PublicKey::new(alg, bytes).unwrap();
+        let der = key.to_der();
+        let decoded: Key = der.as_slice().try_into().unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.key_type(), KeyType::Public);
+    }
+
+    #[test]
+    fn test_key_encode_der_to() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0xDDu8; 800];
+        let key = PublicKey::new(alg, bytes).unwrap();
+        let key = Key::Public(key);
+        let mut buf = Vec::new();
+        key.encode_der_to(&mut buf);
+        let decoded = Key::from_der(&buf).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+    }
+
+    #[test]
+    fn test_all_algorithms_public_der_roundtrip() {
+        for alg in Algorithm::all() {
+            let bytes = vec![0x42u8; alg.public_key_size()];
+            let key = PublicKey::new(alg, bytes.clone()).unwrap();
+            let der = key.to_der();
+            let decoded = PublicKey::from_spki(&der).unwrap();
+            assert_eq!(decoded.algorithm(), alg, "failed for {}", alg);
+            assert_eq!(decoded.bytes(), &bytes[..]);
+        }
+    }
+
+    #[test]
+    fn test_all_algorithms_private_der_roundtrip() {
+        for alg in Algorithm::all() {
+            let bytes = vec![0x42u8; alg.private_key_size()];
+            let key = PrivateKey::new(alg, bytes.clone()).unwrap();
+            let der = key.to_der();
+            let decoded = PrivateKey::from_pkcs8(&der).unwrap();
+            assert_eq!(decoded.algorithm(), alg, "failed for {}", alg);
+            assert_eq!(decoded.bytes(), &bytes[..]);
+        }
+    }
+
+    #[test]
+    fn test_all_algorithms_key_from_der_roundtrip() {
+        for alg in Algorithm::all() {
+            // Public
+            let pub_bytes = vec![0x42u8; alg.public_key_size()];
+            let pub_key = PublicKey::new(alg, pub_bytes).unwrap();
+            let pub_der = pub_key.to_der();
+            let decoded = Key::from_der(&pub_der).unwrap();
+            assert_eq!(decoded.algorithm(), alg);
+            assert_eq!(decoded.key_type(), KeyType::Public);
+
+            // Private
+            let priv_bytes = vec![0x42u8; alg.private_key_size()];
+            let priv_key = PrivateKey::new(alg, priv_bytes).unwrap();
+            let priv_der = priv_key.to_der();
+            let decoded = Key::from_der(&priv_der).unwrap();
+            assert_eq!(decoded.algorithm(), alg);
+            assert_eq!(decoded.key_type(), KeyType::Private);
+        }
     }
 }
