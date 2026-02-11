@@ -1,9 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
 
-#[allow(dead_code)]
 mod asn1;
+mod der;
 mod error;
+mod pkcs8;
+mod spki;
 mod types;
 mod validation;
 

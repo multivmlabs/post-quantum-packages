@@ -7,3 +7,4 @@ pub(crate) const TAG_SEQUENCE: u8 = 0x30;
 pub(crate) const TAG_CONTEXT_0: u8 = 0xA0;
 #[allow(dead_code)]
 pub(crate) const TAG_CONTEXT_1: u8 = 0xA1;
+pub(crate) const TAG_CONTEXT_1_IMPLICIT: u8 = 0x81;
