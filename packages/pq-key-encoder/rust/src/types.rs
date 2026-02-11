@@ -1,6 +1,6 @@
 use core::fmt;
 
-#[cfg(feature = "pem")]
+#[cfg(any(feature = "pem", feature = "jwk"))]
 use alloc::string::String;
 use alloc::vec::Vec;
 use pq_oid::Algorithm;
@@ -107,6 +107,12 @@ impl<'a> PublicKeyRef<'a> {
         crate::pem::encode_pem(&der, crate::pem::label_for_key_type(KeyType::Public))
     }
 
+    /// Encode this public key as a JWK.
+    #[cfg(feature = "jwk")]
+    pub fn to_jwk(&self) -> crate::jwk::PublicJwk {
+        crate::jwk::encode_public_jwk(self.algorithm, self.bytes)
+    }
+
     /// Converts to an owned `PublicKey`.
     pub fn to_owned(&self) -> PublicKey {
         PublicKey {
@@ -192,6 +198,23 @@ impl<'a> PrivateKeyRef<'a> {
     pub fn to_pem(&self) -> String {
         let der = self.to_pkcs8();
         crate::pem::encode_pem(&der, crate::pem::label_for_key_type(KeyType::Private))
+    }
+
+    /// Encode this private key as a JWK. Requires the corresponding public key.
+    ///
+    /// Returns an error if the public key's algorithm does not match.
+    #[cfg(feature = "jwk")]
+    pub fn to_jwk(&self, public_key: &PublicKeyRef<'_>) -> Result<crate::jwk::PrivateJwk> {
+        if public_key.algorithm != self.algorithm {
+            return Err(crate::error::Error::InvalidJwk(
+                "public key algorithm does not match private key",
+            ));
+        }
+        Ok(crate::jwk::encode_private_jwk(
+            self.algorithm,
+            public_key.bytes,
+            self.bytes,
+        ))
     }
 
     /// Converts to an owned `PrivateKey`.
@@ -297,6 +320,22 @@ impl PublicKey {
     #[cfg(feature = "pem")]
     pub fn to_pem(&self) -> String {
         self.as_key_ref().to_pem()
+    }
+
+    /// Decode a JWK into an owned `PublicKey`.
+    #[cfg(feature = "jwk")]
+    pub fn from_jwk(jwk: &crate::jwk::PublicJwk) -> Result<Self> {
+        let (alg, bytes) = crate::jwk::decode_public_jwk(jwk)?;
+        Ok(Self {
+            algorithm: alg,
+            bytes,
+        })
+    }
+
+    /// Encode this public key as a JWK.
+    #[cfg(feature = "jwk")]
+    pub fn to_jwk(&self) -> crate::jwk::PublicJwk {
+        self.as_key_ref().to_jwk()
     }
 
     /// Returns a borrowed `PublicKeyRef`.
@@ -412,6 +451,24 @@ impl PrivateKey {
     #[cfg(feature = "pem")]
     pub fn to_pem(&self) -> String {
         self.as_key_ref().to_pem()
+    }
+
+    /// Decode a JWK into an owned `PrivateKey`.
+    #[cfg(feature = "jwk")]
+    pub fn from_jwk(jwk: &crate::jwk::PrivateJwk) -> Result<Self> {
+        let (alg, bytes) = crate::jwk::decode_private_jwk(jwk)?;
+        Ok(Self {
+            algorithm: alg,
+            bytes,
+        })
+    }
+
+    /// Encode this private key as a JWK. Requires the corresponding public key.
+    ///
+    /// Returns an error if the public key's algorithm does not match.
+    #[cfg(feature = "jwk")]
+    pub fn to_jwk(&self, public_key: &PublicKey) -> Result<crate::jwk::PrivateJwk> {
+        self.as_key_ref().to_jwk(&public_key.as_key_ref())
     }
 
     /// Returns a borrowed `PrivateKeyRef`.
@@ -563,6 +620,22 @@ impl Key {
             Key::Public(k) => k.to_pem(),
             Key::Private(k) => k.to_pem(),
         }
+    }
+
+    /// Decode a JWK into a `Key`.
+    #[cfg(feature = "jwk")]
+    pub fn from_jwk(jwk: &crate::jwk::Jwk) -> Result<Self> {
+        match jwk {
+            crate::jwk::Jwk::Public(j) => PublicKey::from_jwk(j).map(Key::Public),
+            crate::jwk::Jwk::Private(j) => PrivateKey::from_jwk(j).map(Key::Private),
+        }
+    }
+
+    /// Decode a JWK JSON string into a `Key` (parses JSON then dispatches).
+    #[cfg(feature = "jwk")]
+    pub fn from_jwk_str(json: &str) -> Result<Self> {
+        let jwk = crate::jwk::Jwk::from_json(json)?;
+        Self::from_jwk(&jwk)
     }
 }
 
@@ -1029,6 +1102,171 @@ mod tests {
                 alg
             );
             assert_eq!(decoded.bytes(), priv_key.bytes());
+        }
+    }
+
+    // =========================================================================
+    // JWK encoding/decoding tests
+    // =========================================================================
+
+    #[cfg(feature = "jwk")]
+    #[test]
+    fn test_public_key_to_jwk() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0x42u8; 800];
+        let key = PublicKey::new(alg, bytes).unwrap();
+        let jwk = key.to_jwk();
+        assert_eq!(jwk.kty, "PQC");
+        assert_eq!(jwk.alg, "ML-KEM-512");
+        assert!(!jwk.x.is_empty());
+    }
+
+    #[cfg(feature = "jwk")]
+    #[test]
+    fn test_public_key_jwk_roundtrip() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0x42u8; 800];
+        let key = PublicKey::new(alg, bytes).unwrap();
+        let jwk = key.to_jwk();
+        let decoded = PublicKey::from_jwk(&jwk).unwrap();
+        assert_eq!(decoded, key);
+    }
+
+    #[cfg(feature = "jwk")]
+    #[test]
+    fn test_private_key_jwk_roundtrip() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let pub_bytes = vec![0x42u8; 800];
+        let priv_bytes = vec![0xABu8; 1632];
+        let pub_key = PublicKey::new(alg, pub_bytes).unwrap();
+        let priv_key = PrivateKey::new(alg, priv_bytes).unwrap();
+        let jwk = priv_key.to_jwk(&pub_key).unwrap();
+        let decoded = PrivateKey::from_jwk(&jwk).unwrap();
+        assert_eq!(decoded, priv_key);
+    }
+
+    #[cfg(feature = "jwk")]
+    #[test]
+    fn test_public_key_ref_to_jwk() {
+        let alg = Algorithm::MlKem(MlKem::Kem768);
+        let bytes = vec![0x42u8; 1184];
+        let key_ref = PublicKeyRef::new(alg, &bytes).unwrap();
+        let jwk = key_ref.to_jwk();
+        let decoded = PublicKey::from_jwk(&jwk).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.bytes(), &bytes[..]);
+    }
+
+    #[cfg(feature = "jwk")]
+    #[test]
+    fn test_private_key_ref_to_jwk() {
+        let alg = Algorithm::SlhDsa(SlhDsa::Sha2_128s);
+        let pub_bytes = vec![0x42u8; 32];
+        let priv_bytes = vec![0xABu8; 64];
+        let pub_ref = PublicKeyRef::new(alg, &pub_bytes).unwrap();
+        let priv_ref = PrivateKeyRef::new(alg, &priv_bytes).unwrap();
+        let jwk = priv_ref.to_jwk(&pub_ref).unwrap();
+        let decoded = PrivateKey::from_jwk(&jwk).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.bytes(), &priv_bytes[..]);
+    }
+
+    #[cfg(feature = "jwk")]
+    #[test]
+    fn test_private_key_to_jwk_algorithm_mismatch() {
+        // SLH-DSA SHA2-128s and SHAKE-128s both have 32-byte public keys
+        let priv_alg = Algorithm::SlhDsa(SlhDsa::Sha2_128s);
+        let pub_alg = Algorithm::SlhDsa(SlhDsa::Shake128s);
+        let priv_bytes = vec![0xABu8; 64];
+        let pub_bytes = vec![0x42u8; 32];
+        let priv_ref = PrivateKeyRef::new(priv_alg, &priv_bytes).unwrap();
+        let pub_ref = PublicKeyRef::new(pub_alg, &pub_bytes).unwrap();
+        let err = priv_ref.to_jwk(&pub_ref).unwrap_err();
+        assert!(matches!(err, crate::error::Error::InvalidJwk(_)));
+    }
+
+    #[cfg(feature = "jwk")]
+    #[test]
+    fn test_key_from_jwk_public() {
+        let alg = Algorithm::MlDsa(MlDsa::Dsa44);
+        let bytes = vec![0x42u8; 1312];
+        let pub_key = PublicKey::new(alg, bytes).unwrap();
+        let jwk = crate::jwk::Jwk::Public(pub_key.to_jwk());
+        let decoded = Key::from_jwk(&jwk).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.key_type(), KeyType::Public);
+        assert_eq!(decoded.bytes(), pub_key.bytes());
+    }
+
+    #[cfg(feature = "jwk")]
+    #[test]
+    fn test_key_from_jwk_private() {
+        let alg = Algorithm::MlDsa(MlDsa::Dsa44);
+        let pub_bytes = vec![0x42u8; 1312];
+        let priv_bytes = vec![0xABu8; 2560];
+        let pub_key = PublicKey::new(alg, pub_bytes).unwrap();
+        let priv_key = PrivateKey::new(alg, priv_bytes).unwrap();
+        let jwk = crate::jwk::Jwk::Private(priv_key.to_jwk(&pub_key).unwrap());
+        let decoded = Key::from_jwk(&jwk).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.key_type(), KeyType::Private);
+        assert_eq!(decoded.bytes(), priv_key.bytes());
+    }
+
+    #[cfg(feature = "jwk")]
+    #[test]
+    fn test_key_from_jwk_str_public() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0x42u8; 800];
+        let key = PublicKey::new(alg, bytes).unwrap();
+        let json = key.to_jwk().to_json();
+        let decoded = Key::from_jwk_str(&json).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.key_type(), KeyType::Public);
+        assert_eq!(decoded.bytes(), key.bytes());
+    }
+
+    #[cfg(feature = "jwk")]
+    #[test]
+    fn test_key_from_jwk_str_private() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let pub_bytes = vec![0x42u8; 800];
+        let priv_bytes = vec![0xABu8; 1632];
+        let pub_key = PublicKey::new(alg, pub_bytes).unwrap();
+        let priv_key = PrivateKey::new(alg, priv_bytes).unwrap();
+        let json = priv_key.to_jwk(&pub_key).unwrap().to_json();
+        let decoded = Key::from_jwk_str(&json).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.key_type(), KeyType::Private);
+        assert_eq!(decoded.bytes(), priv_key.bytes());
+    }
+
+    #[cfg(feature = "jwk")]
+    #[test]
+    fn test_all_algorithms_jwk_roundtrip() {
+        for alg in Algorithm::all() {
+            let pub_bytes = vec![0x42u8; alg.public_key_size()];
+            let priv_bytes = vec![0xABu8; alg.private_key_size()];
+            let pub_key = PublicKey::new(alg, pub_bytes).unwrap();
+            let priv_key = PrivateKey::new(alg, priv_bytes).unwrap();
+
+            // Public JWK roundtrip
+            let pub_jwk = pub_key.to_jwk();
+            let decoded_pub = PublicKey::from_jwk(&pub_jwk).unwrap();
+            assert_eq!(
+                decoded_pub, pub_key,
+                "public JWK roundtrip failed for {}",
+                alg
+            );
+
+            // Private JWK roundtrip
+            let priv_jwk = priv_key.to_jwk(&pub_key).unwrap();
+            let decoded_priv = PrivateKey::from_jwk(&priv_jwk).unwrap();
+            assert_eq!(
+                decoded_priv, priv_key,
+                "private JWK roundtrip failed for {}",
+                alg
+            );
         }
     }
 
