@@ -81,6 +81,9 @@ version = "0.0.1"
 [[package]]
 name = "pq-key-encoder"
 version = "0.0.1"
+dependencies = [
+ "pq-oid",
+]
 
 [[package]]
 name = "pq-key-fingerprint"
@@ -96,7 +99,7 @@ version = "0.0.1"
 
 [[package]]
 name = "pq-oid"
-version = "0.0.2"
+version = "1.0.2"
 
 [[package]]
 name = "pq-pkcs7"
