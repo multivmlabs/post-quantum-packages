@@ -4,6 +4,7 @@ use core::fmt;
 use alloc::string::String;
 use alloc::vec::Vec;
 use pq_oid::Algorithm;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::error::Result;
 use crate::validation::validate_key_size;
@@ -123,10 +124,19 @@ impl<'a> PublicKeyRef<'a> {
 }
 
 /// A borrowed private key reference. Zero-copy over input data.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct PrivateKeyRef<'a> {
     algorithm: Algorithm,
     bytes: &'a [u8],
+}
+
+impl fmt::Debug for PrivateKeyRef<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PrivateKeyRef")
+            .field("algorithm", &self.algorithm)
+            .field("bytes", &"[REDACTED]")
+            .finish()
+    }
 }
 
 impl<'a> PrivateKeyRef<'a> {
@@ -360,10 +370,32 @@ impl<'a> From<PublicKeyRef<'a>> for PublicKey {
 }
 
 /// An owned private key.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// Private key bytes are zeroized on drop to prevent key material from
+/// lingering in heap memory. `Clone` is deliberately not derived —
+/// cloning private keys should be an explicit operation via `from_bytes`.
+#[derive(Zeroize, ZeroizeOnDrop)]
 pub struct PrivateKey {
+    #[zeroize(skip)]
     algorithm: Algorithm,
     bytes: Vec<u8>,
+}
+
+impl PartialEq for PrivateKey {
+    fn eq(&self, other: &Self) -> bool {
+        self.algorithm == other.algorithm && self.bytes == other.bytes
+    }
+}
+
+impl Eq for PrivateKey {}
+
+impl fmt::Debug for PrivateKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PrivateKey")
+            .field("algorithm", &self.algorithm)
+            .field("bytes", &"[REDACTED]")
+            .finish()
+    }
 }
 
 impl PrivateKey {
@@ -400,9 +432,11 @@ impl PrivateKey {
         KeyType::Private
     }
 
-    /// Consumes self and returns the inner byte vector.
-    pub fn into_bytes(self) -> Vec<u8> {
-        self.bytes
+    /// Extracts the inner byte vector wrapped in `Zeroizing` so the
+    /// key material is automatically zeroized when the returned value
+    /// is dropped.
+    pub fn into_bytes(mut self) -> zeroize::Zeroizing<Vec<u8>> {
+        zeroize::Zeroizing::new(core::mem::take(&mut self.bytes))
     }
 
     /// Decode a PKCS8 DER-encoded private key into an owned `PrivateKey`.
@@ -492,15 +526,34 @@ impl<'a> From<PrivateKeyRef<'a>> for PrivateKey {
     }
 }
 
+impl Clone for PrivateKey {
+    /// Explicitly clone a private key. The cloned copy is also zeroized on drop.
+    fn clone(&self) -> Self {
+        Self {
+            algorithm: self.algorithm,
+            bytes: self.bytes.clone(),
+        }
+    }
+}
+
 // =============================================================================
 // Key enum
 // =============================================================================
 
 /// A key that is either public or private.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Key {
     Public(PublicKey),
     Private(PrivateKey),
+}
+
+impl fmt::Debug for Key {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Key::Public(k) => f.debug_tuple("Key::Public").field(k).finish(),
+            Key::Private(k) => f.debug_tuple("Key::Private").field(k).finish(),
+        }
+    }
 }
 
 impl Key {

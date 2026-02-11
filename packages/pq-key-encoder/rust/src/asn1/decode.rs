@@ -41,6 +41,7 @@ pub(crate) fn read_tlv(input: &[u8], offset: usize) -> Result<Tlv<'_>> {
 
 /// Decode an OID from raw DER value bytes (without tag/length).
 /// Returns dotted notation string like "2.16.840.1.101.3.4.4.1".
+#[allow(dead_code)]
 pub(crate) fn decode_oid(bytes: &[u8]) -> Result<String> {
     Ok(pq_oid::decode_oid(bytes)?)
 }

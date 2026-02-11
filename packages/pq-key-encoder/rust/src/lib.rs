@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
+extern crate zeroize;
 
 mod asn1;
 #[cfg(any(feature = "pem", feature = "jwk"))]

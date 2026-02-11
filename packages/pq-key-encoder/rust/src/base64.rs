@@ -7,32 +7,47 @@ const ENCODE_STD: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 
 const ENCODE_URL: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
-/// Decode table: maps ASCII byte to 6-bit value. 0xFF = invalid.
-/// Supports both standard (+/) and url-safe (-_) alphabets.
-const DECODE: [u8; 256] = {
+/// Decode table for standard base64 (+/). 0xFF = invalid.
+const DECODE_STD: [u8; 256] = {
     let mut table = [0xFFu8; 256];
     let mut i = 0u8;
-    // A-Z = 0-25
     while i < 26 {
         table[(b'A' + i) as usize] = i;
         i += 1;
     }
-    // a-z = 26-51
     i = 0;
     while i < 26 {
         table[(b'a' + i) as usize] = 26 + i;
         i += 1;
     }
-    // 0-9 = 52-61
     i = 0;
     while i < 10 {
         table[(b'0' + i) as usize] = 52 + i;
         i += 1;
     }
-    // Standard: + = 62, / = 63
     table[b'+' as usize] = 62;
     table[b'/' as usize] = 63;
-    // URL-safe: - = 62, _ = 63
+    table
+};
+
+/// Decode table for base64url (-_). 0xFF = invalid.
+const DECODE_URL: [u8; 256] = {
+    let mut table = [0xFFu8; 256];
+    let mut i = 0u8;
+    while i < 26 {
+        table[(b'A' + i) as usize] = i;
+        i += 1;
+    }
+    i = 0;
+    while i < 26 {
+        table[(b'a' + i) as usize] = 26 + i;
+        i += 1;
+    }
+    i = 0;
+    while i < 10 {
+        table[(b'0' + i) as usize] = 52 + i;
+        i += 1;
+    }
     table[b'-' as usize] = 62;
     table[b'_' as usize] = 63;
     table
@@ -122,27 +137,36 @@ fn encode_with_table_to(data: &[u8], table: &[u8; 64], pad: bool, out: &mut Stri
 }
 
 /// Decode standard base64 (strips whitespace, accepts padded/unpadded).
+/// Rejects URL-safe characters `-` and `_`.
 pub(crate) fn decode_base64(input: &str) -> Result<Vec<u8>> {
-    decode_impl(input)
+    decode_impl(input, &DECODE_STD)
 }
 
 /// Decode base64url (strips whitespace, accepts padded/unpadded).
-/// Uses the same decode table since it maps both +/ and -_ variants.
+/// Rejects standard characters `+` and `/` per RFC 7515/7517.
 #[allow(dead_code)]
 pub(crate) fn decode_base64url(input: &str) -> Result<Vec<u8>> {
-    decode_impl(input)
+    decode_impl(input, &DECODE_URL)
 }
 
-fn decode_impl(input: &str) -> Result<Vec<u8>> {
-    // Strip whitespace and padding, collect valid chars into a scratch buffer.
-    // We avoid allocating a separate cleaned string by iterating bytes directly.
+fn decode_impl(input: &str, table: &[u8; 256]) -> Result<Vec<u8>> {
     let bytes = input.as_bytes();
 
-    // Count non-whitespace, non-padding bytes to pre-size output
+    // Single-pass scan: count data characters, skip whitespace and trailing padding.
+    // Once we encounter `=`, only more `=` or whitespace may follow (no data after padding).
     let mut clean_len = 0usize;
+    let mut saw_pad = false;
     for &b in bytes {
-        if b == b' ' || b == b'\t' || b == b'\n' || b == b'\r' || b == b'=' {
+        if b == b' ' || b == b'\t' || b == b'\n' || b == b'\r' {
             continue;
+        }
+        if b == b'=' {
+            saw_pad = true;
+            continue;
+        }
+        // Non-whitespace, non-pad character after padding → invalid
+        if saw_pad {
+            return Err(Error::InvalidBase64("padding must only appear at end"));
         }
         clean_len += 1;
     }
@@ -168,7 +192,7 @@ fn decode_impl(input: &str) -> Result<Vec<u8>> {
 
     let mut out = Vec::with_capacity(out_len);
 
-    // Iterate through input, skipping whitespace and padding
+    // Decode data bytes, skipping whitespace and padding
     let mut buf = [0u8; 4];
     let mut buf_pos = 0;
 
@@ -176,7 +200,7 @@ fn decode_impl(input: &str) -> Result<Vec<u8>> {
         if b == b' ' || b == b'\t' || b == b'\n' || b == b'\r' || b == b'=' {
             continue;
         }
-        let val = DECODE[b as usize];
+        let val = table[b as usize];
         if val == 0xFF {
             return Err(Error::InvalidBase64("invalid character"));
         }
@@ -326,9 +350,26 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_base64url_with_std_chars() {
-        // Our decode table accepts both +/ and -_ variants
+    fn test_decode_base64url_rejects_std_chars() {
+        // base64url must reject standard alphabet characters + and /
+        assert!(decode_base64url("+/==").is_err());
+        // But common alphanumeric chars still work
         assert_eq!(decode_base64url("Zm9v").unwrap(), b"foo");
+    }
+
+    #[test]
+    fn test_decode_base64_rejects_url_chars() {
+        // Standard base64 must reject URL-safe characters - and _
+        assert!(decode_base64("-_==").is_err());
+        // But common alphanumeric chars still work
+        assert_eq!(decode_base64("Zm9v").unwrap(), b"foo");
+    }
+
+    #[test]
+    fn test_decode_rejects_mid_padding() {
+        // Padding in the middle should be rejected
+        assert!(decode_base64("Zm=9v").is_err());
+        assert!(decode_base64url("Zm=9v").is_err());
     }
 
     #[test]
