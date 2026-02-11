@@ -2,10 +2,17 @@
 name = "pq-key-encoder"
 version = "0.0.1"
 edition = "2021"
-description = "Post-quantum key encoding utilities"
+description = "Post-quantum key encoding (DER, PEM, JWK) for ML-KEM, ML-DSA, SLH-DSA"
 license = "MIT"
 readme = "README.md"
-keywords = ["post-quantum", "cryptography", "key-encoding", "pqc"]
-categories = ["cryptography"]
+keywords = ["post-quantum", "cryptography", "key-encoding", "pqc", "der"]
+categories = ["cryptography", "encoding"]
+
+[features]
+default = ["std", "pem"]
+std = ["pq-oid/std"]
+pem = []
+jwk = []
 
 [dependencies]
+pq-oid = { path = "../../pq-oid/rust" }
