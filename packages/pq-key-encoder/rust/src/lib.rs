@@ -2,8 +2,12 @@
 extern crate alloc;
 
 mod asn1;
+#[cfg(any(feature = "pem", feature = "jwk"))]
+mod base64;
 mod der;
 mod error;
+#[cfg(feature = "pem")]
+mod pem;
 mod pkcs8;
 mod spki;
 mod types;
