@@ -1,62 +1,118 @@
 ---
 name: apply-pr-feedback
-description: "Evaluates PR review feedback (file, line, comment), classifies it as valid or false-positive, applies fixes for valid feedback, runs acceptance checks, and pushes updates via Graphite. Use when applying code review comments to an open PR."
-argument-hint: "<file-path:line-range> <feedback-text>"
+description: "Automated PR review loop: fetches all PR comments, checks the last one to determine state, evaluates and fixes codex findings, pushes, re-triggers review, and repeats until clean — then squash-merges."
+argument-hint: "[pr-number-or-url]"
 ---
 
 # Apply PR Feedback
 
-Evaluates and applies PR review feedback one item at a time. For each piece of feedback: assess validity, fix if valid, then after all feedback is processed run checks and push.
+Deterministic loop that processes codex review feedback on a PR until clean, then merges.
 
 ## Inputs
 
-Each feedback item consists of:
+- **PR number or URL** — optional. If not provided, detect from the current Graphite branch (`gt ls` or `gh pr list --head <branch>`).
 
-- **File path** and **line range** — the code location being reviewed.
-- **Feedback text** — the reviewer's comment describing the issue or suggestion.
+No manual copy-paste of feedback is needed — the skill reads comments directly from the PR.
 
-The user may provide multiple feedback items in sequence. Process them one at a time in conversation order.
+## Setup
 
-## Feedback Evaluation
+1. Determine the PR number (from argument or current branch).
+2. Determine the repo owner/name from `git remote get-url origin`.
 
-For each feedback item:
+## Step 1: Get All Comments
+
+Fetch all comments on the PR (both issue comments and PR review comments are visible here):
+```bash
+gh api repos/{owner}/{repo}/issues/{pr}/comments \
+  --jq '[.[] | {id, user: .user.login, body: .body, created_at}] | sort_by(.created_at)'
+```
+
+Also fetch PR reviews (codex sometimes posts as a PR review instead of an issue comment):
+```bash
+gh api repos/{owner}/{repo}/pulls/{pr}/reviews \
+  --jq '[.[] | {id, user: .user.login, body: .body, submitted_at}] | sort_by(.submitted_at)'
+```
+
+Combine both lists and sort by timestamp. Identify the **last comment/review** across both.
+
+## Step 2: Check the Last Comment
+
+Look at the last comment/review and branch:
+
+### (a) Last comment contains `@codex review`
+
+Review is still pending. Sleep 60 seconds, then go back to **Step 1**.
+
+### (b) Last comment/review is from `chatgpt-codex-connector[bot]`
+
+Check if it indicates a clean review or has findings:
+
+- **Clean review** — the body contains "Didn't find any major issues" or similar pass message → go to **Step 8**.
+- **Has findings** — codex posted inline review comments → go to **Step 3**.
+
+To check for inline findings:
+```bash
+gh api repos/{owner}/{repo}/pulls/{pr}/comments \
+  --jq '[.[] | select(.user.login == "chatgpt-codex-connector[bot]")]'
+```
+Filter to only unresolved comments (check against resolved threads). If there are unresolved codex comments, proceed to **Step 3**. If all are resolved (or there are none), treat as clean → go to **Step 8**.
+
+### (c) Last comment is something else (e.g., Greptile, a human)
+
+Ignore it. Look at the comment before it and repeat this check. Walk backwards through comments until you find either `@codex review` or a `chatgpt-codex-connector[bot]` response.
+
+## Step 3: Evaluate Findings
+
+For each unresolved codex inline comment:
 
 1. Read the referenced file and line range with full surrounding context.
 2. Evaluate the feedback against the actual code:
-   - **Valid** — the feedback identifies a real issue (bug, safety concern, spec violation, missing edge case, etc.)
-   - **Improvement** — the feedback suggests a better approach that is correct but not strictly a bug.
-   - **False positive** — the feedback describes a problem that does not actually exist in the code.
+   - **Valid** — real issue (bug, safety concern, spec violation, missing edge case)
+   - **Improvement** — better approach, correct but not strictly a bug
+   - **False positive** — problem does not actually exist in the code
 
-3. Report your assessment concisely:
+3. Report assessment:
+   ```text
+   [file:lines] — <Valid | Improvement | False positive>
+   Reason: <1-2 sentence explanation>
+   ```
 
-```text
-[file:lines] — <Valid | Improvement | False positive>
-Reason: <1-2 sentence explanation>
+4. If **valid** or **improvement**, apply the fix immediately.
+5. If **false positive**, reply to the comment with a brief reason explaining why.
+
+## Step 4: Resolve PR Conversations
+
+After evaluating ALL comments and applying all fixes, resolve each review thread:
+
+To resolve a review thread, use the GraphQL API. First fetch thread IDs:
+```bash
+gh api graphql -f query='
+  query {
+    repository(owner: "<owner>", name: "<repo>") {
+      pullRequest(number: <pr>) {
+        reviewThreads(last: 50) {
+          nodes { id isResolved comments(first: 1) { nodes { body author { login } } } }
+        }
+      }
+    }
+  }
+'
 ```
 
-4. If **false positive**, explain why and ask the user to confirm before skipping.
-5. If **valid** or **improvement**, apply the fix immediately.
+Then resolve each unresolved codex thread:
+```bash
+gh api graphql -f query='
+  mutation {
+    resolveReviewThread(input: {threadId: "<thread_id>"}) {
+      thread { isResolved }
+    }
+  }
+'
+```
 
-## Applying Fixes
+**Important:** `resolveReviewThread` requires a `PullRequestReviewThread` ID (starts with `PRRT_`), not a review comment ID. Match threads to comments by the first comment body and author.
 
-When applying a fix:
-
-- Make the minimal change that addresses the feedback.
-- If the fix changes function signatures or behavior, update all callers.
-- If the fix changes error handling or edge cases, add or update tests to cover the new behavior.
-- Do not make unrelated changes or refactor surrounding code.
-
-## Batch Flow
-
-The user will provide feedback items one at a time or in batches. Follow this flow:
-
-1. For each item: evaluate, report assessment, apply fix (or flag false positive).
-2. After applying a fix, confirm it's done and ask if there is more feedback.
-3. When the user says all feedback is provided, proceed to **Verification & Push**.
-
-## Verification & Push
-
-After all feedback items are resolved:
+## Step 5: Run Acceptance Checks
 
 1. Run the repository acceptance criteria:
    - Build commands (including no_std if applicable).
@@ -64,19 +120,22 @@ After all feedback items are resolved:
    - Formatter check.
    - Full test suite.
 2. If any check fails, fix the issue and rerun until passing.
-3. Once all checks pass, push the update:
-   - `git add <changed-files>` — stage only the files that were modified.
-   - `gt modify` — amend the changes into the current branch commit.
-   - `gt submit` — push the updated branch.
 
-## Reporting
+## Step 6: Push Changes
 
-After push, summarize:
+Once all checks pass:
+```bash
+git add <changed-files>
+gt modify
+gt submit
+```
 
+Report summary:
 ```text
-PR feedback applied:
-- [file:lines] — <assessment> — <what was changed>
-- [file:lines] — <assessment> — <what was changed>
+| File:Lines | Assessment | Action |
+|---|---|---|
+| file.rs:10-15 | Valid | Brief description of fix applied |
+| file.rs:42-44 | False positive | Reason (no change) |
 
 Checks passed:
 - <command 1>
@@ -85,6 +144,26 @@ Checks passed:
 Pushed via: gt modify + gt submit
 ```
 
+## Step 7: Trigger Review and Loop
+
+```bash
+gh pr comment {pr-number} --body "@codex review"
+sleep 60
+```
+
+Go back to **Step 1**.
+
+## Step 8: Merge PR
+
+Codex review passed with no issues. Ask the user: "Codex review passed. Shall I squash-merge this PR?"
+
+If the user accepts:
+```bash
+gh pr merge {pr-number} --squash --delete-branch
+```
+
+Report the merge result.
+
 ## Rules
 
 - Never push before all acceptance checks pass.
@@ -92,3 +171,6 @@ Pushed via: gt modify + gt submit
 - Do not use `git commit` directly — use `gt modify` to amend into the existing branch commit.
 - If a fix introduces a test failure elsewhere, investigate and fix before pushing.
 - If feedback is ambiguous, ask the user to clarify before making changes.
+- Only process comments from `chatgpt-codex-connector[bot]` — ignore other reviewers.
+- Push autonomously — no user confirmation needed between loop iterations.
+- When waiting for review, poll every 60 seconds — do not busy-loop.

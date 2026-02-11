@@ -106,6 +106,10 @@ After manual confirmation for a phase, run these three steps in order:
 3. **Submit and publish the stack:**
    - `gt submit --publish`
 
+4. **Trigger automated review:**
+   - After the PR is created/updated, post a review trigger comment:
+   - `gh pr comment <PR-number> --body "@codex review"`
+
 Rules:
 
 - Always run `gt sync` first to avoid "already merged" errors blocking submit.
