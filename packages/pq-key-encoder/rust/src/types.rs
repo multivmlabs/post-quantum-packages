@@ -1,5 +1,7 @@
 use core::fmt;
 
+#[cfg(feature = "pem")]
+use alloc::string::String;
 use alloc::vec::Vec;
 use pq_oid::Algorithm;
 
@@ -91,6 +93,20 @@ impl<'a> PublicKeyRef<'a> {
         self.to_spki()
     }
 
+    /// Encode this public key as PEM, appending directly to `out`.
+    #[cfg(feature = "pem")]
+    pub fn encode_pem_to(&self, out: &mut String) {
+        let der = self.to_spki();
+        crate::pem::encode_pem_to(&der, crate::pem::label_for_key_type(KeyType::Public), out);
+    }
+
+    /// Encode this public key as PEM.
+    #[cfg(feature = "pem")]
+    pub fn to_pem(&self) -> String {
+        let der = self.to_spki();
+        crate::pem::encode_pem(&der, crate::pem::label_for_key_type(KeyType::Public))
+    }
+
     /// Converts to an owned `PublicKey`.
     pub fn to_owned(&self) -> PublicKey {
         PublicKey {
@@ -162,6 +178,20 @@ impl<'a> PrivateKeyRef<'a> {
     /// Encode this private key as DER, returning a new `Vec<u8>` (alias for `to_pkcs8`).
     pub fn to_der(&self) -> Vec<u8> {
         self.to_pkcs8()
+    }
+
+    /// Encode this private key as PEM, appending directly to `out`.
+    #[cfg(feature = "pem")]
+    pub fn encode_pem_to(&self, out: &mut String) {
+        let der = self.to_pkcs8();
+        crate::pem::encode_pem_to(&der, crate::pem::label_for_key_type(KeyType::Private), out);
+    }
+
+    /// Encode this private key as PEM.
+    #[cfg(feature = "pem")]
+    pub fn to_pem(&self) -> String {
+        let der = self.to_pkcs8();
+        crate::pem::encode_pem(&der, crate::pem::label_for_key_type(KeyType::Private))
     }
 
     /// Converts to an owned `PrivateKey`.
@@ -251,6 +281,22 @@ impl PublicKey {
     /// Encode this public key as DER, returning a new `Vec<u8>`.
     pub fn to_der(&self) -> Vec<u8> {
         self.as_key_ref().to_der()
+    }
+
+    /// Decode a PEM-encoded public key into an owned `PublicKey`.
+    #[cfg(feature = "pem")]
+    pub fn from_pem(pem: &str) -> Result<Self> {
+        let (label, der) = crate::pem::decode_pem(pem)?;
+        if label != crate::pem::label_for_key_type(KeyType::Public) {
+            return Err(crate::error::Error::InvalidPem("expected PUBLIC KEY label"));
+        }
+        Self::from_spki(&der)
+    }
+
+    /// Encode this public key as PEM.
+    #[cfg(feature = "pem")]
+    pub fn to_pem(&self) -> String {
+        self.as_key_ref().to_pem()
     }
 
     /// Returns a borrowed `PublicKeyRef`.
@@ -348,6 +394,24 @@ impl PrivateKey {
     /// Encode this private key as DER, returning a new `Vec<u8>`.
     pub fn to_der(&self) -> Vec<u8> {
         self.as_key_ref().to_der()
+    }
+
+    /// Decode a PEM-encoded private key into an owned `PrivateKey`.
+    #[cfg(feature = "pem")]
+    pub fn from_pem(pem: &str) -> Result<Self> {
+        let (label, der) = crate::pem::decode_pem(pem)?;
+        if label != crate::pem::label_for_key_type(KeyType::Private) {
+            return Err(crate::error::Error::InvalidPem(
+                "expected PRIVATE KEY label",
+            ));
+        }
+        Self::from_pkcs8(&der)
+    }
+
+    /// Encode this private key as PEM.
+    #[cfg(feature = "pem")]
+    pub fn to_pem(&self) -> String {
+        self.as_key_ref().to_pem()
     }
 
     /// Returns a borrowed `PrivateKeyRef`.
@@ -472,6 +536,32 @@ impl Key {
         match self {
             Key::Public(k) => k.encode_der_to(out),
             Key::Private(k) => k.encode_der_to(out),
+        }
+    }
+
+    /// Decode a PEM-encoded key (auto-detecting PUBLIC KEY or PRIVATE KEY label).
+    #[cfg(feature = "pem")]
+    pub fn from_pem(pem: &str) -> Result<Self> {
+        let (label, der) = crate::pem::decode_pem(pem)?;
+        match label {
+            "PUBLIC KEY" => {
+                let key = PublicKey::from_spki(&der)?;
+                Ok(Key::Public(key))
+            }
+            "PRIVATE KEY" => {
+                let key = PrivateKey::from_pkcs8(&der)?;
+                Ok(Key::Private(key))
+            }
+            _ => Err(crate::error::Error::InvalidPem("unsupported PEM label")),
+        }
+    }
+
+    /// Encode this key as PEM.
+    #[cfg(feature = "pem")]
+    pub fn to_pem(&self) -> String {
+        match self {
+            Key::Public(k) => k.to_pem(),
+            Key::Private(k) => k.to_pem(),
         }
     }
 }
@@ -799,6 +889,249 @@ mod tests {
             let decoded = Key::from_der(&priv_der).unwrap();
             assert_eq!(decoded.algorithm(), alg);
             assert_eq!(decoded.key_type(), KeyType::Private);
+        }
+    }
+
+    // =========================================================================
+    // PEM encoding/decoding tests
+    // =========================================================================
+
+    #[cfg(feature = "pem")]
+    #[test]
+    fn test_public_key_pem_roundtrip() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0xABu8; 800];
+        let key = PublicKey::new(alg, bytes).unwrap();
+        let pem = key.to_pem();
+        let decoded = PublicKey::from_pem(&pem).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.bytes(), key.bytes());
+    }
+
+    #[cfg(feature = "pem")]
+    #[test]
+    fn test_private_key_pem_roundtrip() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0xCDu8; 1632];
+        let key = PrivateKey::new(alg, bytes).unwrap();
+        let pem = key.to_pem();
+        let decoded = PrivateKey::from_pem(&pem).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.bytes(), key.bytes());
+    }
+
+    #[cfg(feature = "pem")]
+    #[test]
+    fn test_public_key_from_pem_wrong_label() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0xABu8; 1632];
+        let key = PrivateKey::new(alg, bytes).unwrap();
+        let pem = key.to_pem();
+        let err = PublicKey::from_pem(&pem).unwrap_err();
+        assert!(matches!(err, crate::error::Error::InvalidPem(_)));
+    }
+
+    #[cfg(feature = "pem")]
+    #[test]
+    fn test_private_key_from_pem_wrong_label() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0xABu8; 800];
+        let key = PublicKey::new(alg, bytes).unwrap();
+        let pem = key.to_pem();
+        let err = PrivateKey::from_pem(&pem).unwrap_err();
+        assert!(matches!(err, crate::error::Error::InvalidPem(_)));
+    }
+
+    #[cfg(feature = "pem")]
+    #[test]
+    fn test_key_from_pem_public() {
+        let alg = Algorithm::MlKem(MlKem::Kem768);
+        let bytes = vec![0x42u8; 1184];
+        let key = PublicKey::new(alg, bytes).unwrap();
+        let pem = key.to_pem();
+        let decoded = Key::from_pem(&pem).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.key_type(), KeyType::Public);
+        assert_eq!(decoded.bytes(), key.bytes());
+    }
+
+    #[cfg(feature = "pem")]
+    #[test]
+    fn test_key_from_pem_private() {
+        let alg = Algorithm::MlDsa(MlDsa::Dsa44);
+        let bytes = vec![0x42u8; 2560];
+        let key = PrivateKey::new(alg, bytes).unwrap();
+        let pem = key.to_pem();
+        let decoded = Key::from_pem(&pem).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.key_type(), KeyType::Private);
+        assert_eq!(decoded.bytes(), key.bytes());
+    }
+
+    #[cfg(feature = "pem")]
+    #[test]
+    fn test_key_from_pem_unsupported_label() {
+        let pem = "-----BEGIN CERTIFICATE-----\nAAA=\n-----END CERTIFICATE-----";
+        let err = Key::from_pem(pem).unwrap_err();
+        assert!(matches!(err, crate::error::Error::InvalidPem(_)));
+    }
+
+    #[cfg(feature = "pem")]
+    #[test]
+    fn test_public_key_ref_to_pem() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0xABu8; 800];
+        let key_ref = PublicKeyRef::new(alg, &bytes).unwrap();
+        let pem = key_ref.to_pem();
+        let decoded = PublicKey::from_pem(&pem).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.bytes(), &bytes[..]);
+    }
+
+    #[cfg(feature = "pem")]
+    #[test]
+    fn test_private_key_ref_to_pem() {
+        let alg = Algorithm::MlKem(MlKem::Kem512);
+        let bytes = vec![0xCDu8; 1632];
+        let key_ref = PrivateKeyRef::new(alg, &bytes).unwrap();
+        let pem = key_ref.to_pem();
+        let decoded = PrivateKey::from_pem(&pem).unwrap();
+        assert_eq!(decoded.algorithm(), alg);
+        assert_eq!(decoded.bytes(), &bytes[..]);
+    }
+
+    #[cfg(feature = "pem")]
+    #[test]
+    fn test_all_algorithms_pem_roundtrip() {
+        for alg in Algorithm::all() {
+            // Public
+            let pub_bytes = vec![0x42u8; alg.public_key_size()];
+            let pub_key = PublicKey::new(alg, pub_bytes).unwrap();
+            let pub_pem = pub_key.to_pem();
+            let decoded = PublicKey::from_pem(&pub_pem).unwrap();
+            assert_eq!(
+                decoded.algorithm(),
+                alg,
+                "public PEM roundtrip failed for {}",
+                alg
+            );
+            assert_eq!(decoded.bytes(), pub_key.bytes());
+
+            // Private
+            let priv_bytes = vec![0x42u8; alg.private_key_size()];
+            let priv_key = PrivateKey::new(alg, priv_bytes).unwrap();
+            let priv_pem = priv_key.to_pem();
+            let decoded = PrivateKey::from_pem(&priv_pem).unwrap();
+            assert_eq!(
+                decoded.algorithm(),
+                alg,
+                "private PEM roundtrip failed for {}",
+                alg
+            );
+            assert_eq!(decoded.bytes(), priv_key.bytes());
+        }
+    }
+
+    #[cfg(feature = "pem")]
+    #[test]
+    fn test_real_fixture_pem_types_roundtrip() {
+        use pq_oid::SlhDsa;
+
+        let fixtures: &[(&str, Algorithm, KeyType)] = &[
+            (
+                include_str!("../../test-data/test-keys/ml_kem_512_pub.pem"),
+                Algorithm::MlKem(MlKem::Kem512),
+                KeyType::Public,
+            ),
+            (
+                include_str!("../../test-data/test-keys/ml_kem_512_priv.pem"),
+                Algorithm::MlKem(MlKem::Kem512),
+                KeyType::Private,
+            ),
+            (
+                include_str!("../../test-data/test-keys/ml_kem_768_pub.pem"),
+                Algorithm::MlKem(MlKem::Kem768),
+                KeyType::Public,
+            ),
+            (
+                include_str!("../../test-data/test-keys/ml_kem_768_priv.pem"),
+                Algorithm::MlKem(MlKem::Kem768),
+                KeyType::Private,
+            ),
+            (
+                include_str!("../../test-data/test-keys/ml_kem_1024_pub.pem"),
+                Algorithm::MlKem(MlKem::Kem1024),
+                KeyType::Public,
+            ),
+            (
+                include_str!("../../test-data/test-keys/ml_kem_1024_priv.pem"),
+                Algorithm::MlKem(MlKem::Kem1024),
+                KeyType::Private,
+            ),
+            (
+                include_str!("../../test-data/test-keys/ml_dsa_44_pub.pem"),
+                Algorithm::MlDsa(MlDsa::Dsa44),
+                KeyType::Public,
+            ),
+            (
+                include_str!("../../test-data/test-keys/ml_dsa_44_priv.pem"),
+                Algorithm::MlDsa(MlDsa::Dsa44),
+                KeyType::Private,
+            ),
+            (
+                include_str!("../../test-data/test-keys/ml_dsa_65_pub.pem"),
+                Algorithm::MlDsa(MlDsa::Dsa65),
+                KeyType::Public,
+            ),
+            (
+                include_str!("../../test-data/test-keys/ml_dsa_65_priv.pem"),
+                Algorithm::MlDsa(MlDsa::Dsa65),
+                KeyType::Private,
+            ),
+            (
+                include_str!("../../test-data/test-keys/slh_dsa_sha2_128s_pub.pem"),
+                Algorithm::SlhDsa(SlhDsa::Sha2_128s),
+                KeyType::Public,
+            ),
+            (
+                include_str!("../../test-data/test-keys/slh_dsa_sha2_128s_priv.pem"),
+                Algorithm::SlhDsa(SlhDsa::Sha2_128s),
+                KeyType::Private,
+            ),
+        ];
+
+        for (pem_str, expected_alg, expected_type) in fixtures {
+            match expected_type {
+                KeyType::Public => {
+                    let key = PublicKey::from_pem(pem_str).unwrap();
+                    assert_eq!(
+                        key.algorithm(),
+                        *expected_alg,
+                        "alg mismatch for {}",
+                        expected_alg
+                    );
+                    let re_pem = key.to_pem();
+                    let re_key = PublicKey::from_pem(&re_pem).unwrap();
+                    assert_eq!(re_key, key, "PEM roundtrip failed for {}", expected_alg);
+                }
+                KeyType::Private => {
+                    let key = PrivateKey::from_pem(pem_str).unwrap();
+                    assert_eq!(
+                        key.algorithm(),
+                        *expected_alg,
+                        "alg mismatch for {}",
+                        expected_alg
+                    );
+                    let re_pem = key.to_pem();
+                    let re_key = PrivateKey::from_pem(&re_pem).unwrap();
+                    assert_eq!(re_key, key, "PEM roundtrip failed for {}", expected_alg);
+                }
+            }
+
+            // Also test Key::from_pem dispatch
+            let key = Key::from_pem(pem_str).unwrap();
+            assert_eq!(key.algorithm(), *expected_alg);
+            assert_eq!(key.key_type(), *expected_type);
         }
     }
 }
