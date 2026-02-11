@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { Algorithm } from 'pq-oid';
 import { fromDER, fromPEM } from '../src/index';
 
-const fixtureDir = new URL('./data/test-keys/', import.meta.url);
+const fixtureDir = new URL('../../test-data/test-keys/', import.meta.url);
 
 function readDer(name: string): Uint8Array {
   return new Uint8Array(readFileSync(new URL(name, fixtureDir)));
