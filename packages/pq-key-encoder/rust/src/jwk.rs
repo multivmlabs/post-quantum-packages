@@ -1,8 +1,10 @@
 use alloc::string::String;
 use alloc::vec::Vec;
+use core::fmt;
 use core::str::FromStr;
 
 use pq_oid::Algorithm;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::base64;
 use crate::error::{Error, Result};
@@ -19,7 +21,10 @@ pub struct PublicJwk {
 }
 
 /// A private JWK.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// The `d` field (private key material) and `x` field (public key) are
+/// zeroized on drop to prevent key material from lingering in memory.
+#[derive(Clone, PartialEq, Eq, Zeroize, ZeroizeOnDrop)]
 pub struct PrivateJwk {
     pub kty: String,
     pub alg: String,
@@ -28,11 +33,32 @@ pub struct PrivateJwk {
     pub kid: Option<String>,
 }
 
+impl fmt::Debug for PrivateJwk {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PrivateJwk")
+            .field("kty", &self.kty)
+            .field("alg", &self.alg)
+            .field("x", &"[REDACTED]")
+            .field("d", &"[REDACTED]")
+            .field("kid", &self.kid)
+            .finish()
+    }
+}
+
 /// A JWK that is either public or private.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Jwk {
     Public(PublicJwk),
     Private(PrivateJwk),
+}
+
+impl fmt::Debug for Jwk {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Jwk::Public(j) => f.debug_tuple("Jwk::Public").field(j).finish(),
+            Jwk::Private(j) => f.debug_tuple("Jwk::Private").field(j).finish(),
+        }
+    }
 }
 
 // =============================================================================

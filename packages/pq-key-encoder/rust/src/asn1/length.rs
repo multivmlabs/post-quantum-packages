@@ -63,7 +63,6 @@ pub(crate) fn decode_length(input: &[u8], offset: usize) -> Result<(usize, usize
 }
 
 /// Compute how many bytes `encode_length` will write for the given length value.
-#[allow(dead_code)]
 pub(crate) fn encoded_length_size(len: usize) -> usize {
     if len < 128 {
         1

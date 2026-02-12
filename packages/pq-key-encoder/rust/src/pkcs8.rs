@@ -1,21 +1,38 @@
 use alloc::vec::Vec;
 use pq_oid::Algorithm;
 
+use crate::asn1::length::{encode_length, encoded_length_size};
 use crate::asn1::{algorithm, decode, encode, tags};
 use crate::error::{Error, Result};
 
 /// Encode a private key as PKCS8 DER into the given buffer.
+/// Zero intermediate allocations — computes total size, then writes directly.
 pub(crate) fn encode_pkcs8(algorithm: Algorithm, key_bytes: &[u8], out: &mut Vec<u8>) {
-    let mut version = Vec::new();
-    encode::encode_integer_zero(&mut version);
+    // Version INTEGER 0: always 3 bytes (02 01 00)
+    let version_len: usize = 3;
 
-    let mut alg_id = Vec::new();
-    algorithm::encode_algorithm_identifier(algorithm, &mut alg_id);
+    let alg_id_len = algorithm::encoded_algorithm_identifier_size(algorithm);
 
-    let mut octet = Vec::new();
-    encode::encode_octet_string(key_bytes, &mut octet);
+    // OCTET STRING: tag(1) + length + key_bytes
+    let octet_len = 1 + encoded_length_size(key_bytes.len()) + key_bytes.len();
 
-    encode::encode_sequence(&[&version, &alg_id, &octet], out);
+    // Outer SEQUENCE content = version + alg_id + octet_string
+    let seq_content_len = version_len + alg_id_len + octet_len;
+    let total = 1 + encoded_length_size(seq_content_len) + seq_content_len;
+    out.reserve(total);
+
+    // Write outer SEQUENCE
+    out.push(tags::TAG_SEQUENCE);
+    encode_length(seq_content_len, out);
+
+    // Write version INTEGER 0 directly
+    encode::encode_integer_zero(out);
+
+    // Write AlgorithmIdentifier directly
+    algorithm::encode_algorithm_identifier(algorithm, out);
+
+    // Write OCTET STRING directly
+    encode::encode_octet_string(key_bytes, out);
 }
 
 /// Decode PKCS8 DER. Returns `(Algorithm, &key_bytes)` borrowing from input.

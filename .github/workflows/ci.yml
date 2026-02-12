@@ -147,7 +147,11 @@ jobs:
 
       - name: Test
         working-directory: packages/${{ matrix.package }}/rust
-        run: cargo test
+        run: cargo test --all-features
+
+      - name: Build (no_std)
+        working-directory: packages/${{ matrix.package }}/rust
+        run: cargo build --no-default-features
 
   test-python:
     needs: detect-changes

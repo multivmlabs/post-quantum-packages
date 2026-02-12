@@ -11,6 +11,7 @@ pub(crate) fn encode_tlv(tag: u8, value: &[u8], out: &mut Vec<u8>) {
 }
 
 /// Write a SEQUENCE containing the given pre-encoded elements.
+#[allow(dead_code)]
 pub(crate) fn encode_sequence(elements: &[&[u8]], out: &mut Vec<u8>) {
     let total_len: usize = elements.iter().map(|e| e.len()).sum();
     out.push(tags::TAG_SEQUENCE);

@@ -3,27 +3,68 @@ use pq_oid::Algorithm;
 
 use crate::error::{Error, Result};
 
-use super::decode::{decode_oid, read_tlv};
-use super::length::encode_length;
+use super::decode::read_tlv;
+use super::length::{encode_length, encoded_length_size};
 use super::tags;
 
 /// Encode an AlgorithmIdentifier SEQUENCE for the given algorithm.
 /// Writes: SEQUENCE { OID } (no NULL parameter for PQ algorithms).
+/// Zero intermediate allocations — computes total size, then writes directly.
 pub(crate) fn encode_algorithm_identifier(algorithm: Algorithm, out: &mut Vec<u8>) {
-    // Build the OID TLV
-    let mut oid_bytes = Vec::new();
-    pq_oid::encode_oid_to(algorithm.oid(), &mut oid_bytes)
-        .expect("known algorithm OID should always encode");
+    let oid_value_len = oid_der_len(algorithm);
 
-    let mut oid_tlv = Vec::new();
-    oid_tlv.push(tags::TAG_OBJECT_IDENTIFIER);
-    encode_length(oid_bytes.len(), &mut oid_tlv);
-    oid_tlv.extend_from_slice(&oid_bytes);
+    // OID TLV: tag(1) + length + value
+    let oid_tlv_len = 1 + encoded_length_size(oid_value_len) + oid_value_len;
 
-    // Wrap in SEQUENCE
+    // SEQUENCE: tag(1) + length + OID TLV
+    let seq_content_len = oid_tlv_len;
+    out.reserve(1 + encoded_length_size(seq_content_len) + seq_content_len);
+
     out.push(tags::TAG_SEQUENCE);
-    encode_length(oid_tlv.len(), out);
-    out.extend_from_slice(&oid_tlv);
+    encode_length(seq_content_len, out);
+    out.push(tags::TAG_OBJECT_IDENTIFIER);
+    encode_length(oid_value_len, out);
+    pq_oid::encode_oid_to(algorithm.oid(), out).expect("known algorithm OID should always encode");
+}
+
+/// Returns the encoded size of `encode_algorithm_identifier` for the given algorithm.
+pub(crate) fn encoded_algorithm_identifier_size(algorithm: Algorithm) -> usize {
+    let oid_value_len = oid_der_len(algorithm);
+    let oid_tlv_len = 1 + encoded_length_size(oid_value_len) + oid_value_len;
+    let seq_content_len = oid_tlv_len;
+    1 + encoded_length_size(seq_content_len) + seq_content_len
+}
+
+/// Returns the DER-encoded byte length of an algorithm's OID value.
+/// All 18 PQ OIDs encode to exactly 9 bytes under the NIST arc.
+fn oid_der_len(algorithm: Algorithm) -> usize {
+    use pq_oid::oid;
+    match algorithm {
+        Algorithm::MlKem(k) => match k {
+            pq_oid::MlKem::Kem512 => oid::ML_KEM_512_BYTES.len(),
+            pq_oid::MlKem::Kem768 => oid::ML_KEM_768_BYTES.len(),
+            pq_oid::MlKem::Kem1024 => oid::ML_KEM_1024_BYTES.len(),
+        },
+        Algorithm::MlDsa(d) => match d {
+            pq_oid::MlDsa::Dsa44 => oid::ML_DSA_44_BYTES.len(),
+            pq_oid::MlDsa::Dsa65 => oid::ML_DSA_65_BYTES.len(),
+            pq_oid::MlDsa::Dsa87 => oid::ML_DSA_87_BYTES.len(),
+        },
+        Algorithm::SlhDsa(s) => match s {
+            pq_oid::SlhDsa::Sha2_128s => oid::SLH_DSA_SHA2_128S_BYTES.len(),
+            pq_oid::SlhDsa::Sha2_128f => oid::SLH_DSA_SHA2_128F_BYTES.len(),
+            pq_oid::SlhDsa::Sha2_192s => oid::SLH_DSA_SHA2_192S_BYTES.len(),
+            pq_oid::SlhDsa::Sha2_192f => oid::SLH_DSA_SHA2_192F_BYTES.len(),
+            pq_oid::SlhDsa::Sha2_256s => oid::SLH_DSA_SHA2_256S_BYTES.len(),
+            pq_oid::SlhDsa::Sha2_256f => oid::SLH_DSA_SHA2_256F_BYTES.len(),
+            pq_oid::SlhDsa::Shake128s => oid::SLH_DSA_SHAKE_128S_BYTES.len(),
+            pq_oid::SlhDsa::Shake128f => oid::SLH_DSA_SHAKE_128F_BYTES.len(),
+            pq_oid::SlhDsa::Shake192s => oid::SLH_DSA_SHAKE_192S_BYTES.len(),
+            pq_oid::SlhDsa::Shake192f => oid::SLH_DSA_SHAKE_192F_BYTES.len(),
+            pq_oid::SlhDsa::Shake256s => oid::SLH_DSA_SHAKE_256S_BYTES.len(),
+            pq_oid::SlhDsa::Shake256f => oid::SLH_DSA_SHAKE_256F_BYTES.len(),
+        },
+    }
 }
 
 /// Decode an AlgorithmIdentifier SEQUENCE.
@@ -49,7 +90,8 @@ pub(crate) fn decode_algorithm_identifier(
         ));
     }
 
-    let oid_string = decode_oid(oid_tlv.value)?;
+    // Match OID directly by raw DER bytes — no String allocation
+    let algorithm = algorithm_from_oid_bytes(oid_tlv.value)?;
 
     // Check for optional parameters after the OID
     let consumed = oid_tlv.bytes_read;
@@ -69,9 +111,39 @@ pub(crate) fn decode_algorithm_identifier(
         }
     }
 
-    let algorithm = Algorithm::from_oid(&oid_string).map_err(|_| Error::UnsupportedAlgorithm)?;
-
     Ok((algorithm, outer.bytes_read))
+}
+
+/// Match raw DER-encoded OID bytes to an Algorithm.
+/// Zero allocation — compares byte slices against compile-time constants.
+fn algorithm_from_oid_bytes(bytes: &[u8]) -> Result<Algorithm> {
+    use pq_oid::{oid, MlDsa, MlKem, SlhDsa};
+
+    match bytes {
+        // ML-KEM
+        b if b == oid::ML_KEM_512_BYTES => Ok(Algorithm::MlKem(MlKem::Kem512)),
+        b if b == oid::ML_KEM_768_BYTES => Ok(Algorithm::MlKem(MlKem::Kem768)),
+        b if b == oid::ML_KEM_1024_BYTES => Ok(Algorithm::MlKem(MlKem::Kem1024)),
+        // ML-DSA
+        b if b == oid::ML_DSA_44_BYTES => Ok(Algorithm::MlDsa(MlDsa::Dsa44)),
+        b if b == oid::ML_DSA_65_BYTES => Ok(Algorithm::MlDsa(MlDsa::Dsa65)),
+        b if b == oid::ML_DSA_87_BYTES => Ok(Algorithm::MlDsa(MlDsa::Dsa87)),
+        // SLH-DSA SHA2
+        b if b == oid::SLH_DSA_SHA2_128S_BYTES => Ok(Algorithm::SlhDsa(SlhDsa::Sha2_128s)),
+        b if b == oid::SLH_DSA_SHA2_128F_BYTES => Ok(Algorithm::SlhDsa(SlhDsa::Sha2_128f)),
+        b if b == oid::SLH_DSA_SHA2_192S_BYTES => Ok(Algorithm::SlhDsa(SlhDsa::Sha2_192s)),
+        b if b == oid::SLH_DSA_SHA2_192F_BYTES => Ok(Algorithm::SlhDsa(SlhDsa::Sha2_192f)),
+        b if b == oid::SLH_DSA_SHA2_256S_BYTES => Ok(Algorithm::SlhDsa(SlhDsa::Sha2_256s)),
+        b if b == oid::SLH_DSA_SHA2_256F_BYTES => Ok(Algorithm::SlhDsa(SlhDsa::Sha2_256f)),
+        // SLH-DSA SHAKE
+        b if b == oid::SLH_DSA_SHAKE_128S_BYTES => Ok(Algorithm::SlhDsa(SlhDsa::Shake128s)),
+        b if b == oid::SLH_DSA_SHAKE_128F_BYTES => Ok(Algorithm::SlhDsa(SlhDsa::Shake128f)),
+        b if b == oid::SLH_DSA_SHAKE_192S_BYTES => Ok(Algorithm::SlhDsa(SlhDsa::Shake192s)),
+        b if b == oid::SLH_DSA_SHAKE_192F_BYTES => Ok(Algorithm::SlhDsa(SlhDsa::Shake192f)),
+        b if b == oid::SLH_DSA_SHAKE_256S_BYTES => Ok(Algorithm::SlhDsa(SlhDsa::Shake256s)),
+        b if b == oid::SLH_DSA_SHAKE_256F_BYTES => Ok(Algorithm::SlhDsa(SlhDsa::Shake256f)),
+        _ => Err(Error::UnsupportedAlgorithm),
+    }
 }
 
 #[cfg(test)]

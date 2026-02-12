@@ -1,18 +1,33 @@
 use alloc::vec::Vec;
 use pq_oid::Algorithm;
 
+use crate::asn1::length::{encode_length, encoded_length_size};
 use crate::asn1::{algorithm, decode, encode, tags};
 use crate::error::{Error, Result};
 
 /// Encode a public key as SPKI DER into the given buffer.
+/// Zero intermediate allocations — computes total size, then writes directly.
 pub(crate) fn encode_spki(algorithm: Algorithm, key_bytes: &[u8], out: &mut Vec<u8>) {
-    let mut alg_id = Vec::new();
-    algorithm::encode_algorithm_identifier(algorithm, &mut alg_id);
+    let alg_id_len = algorithm::encoded_algorithm_identifier_size(algorithm);
 
-    let mut bit_string = Vec::new();
-    encode::encode_bit_string(key_bytes, &mut bit_string);
+    // BIT STRING: tag(1) + length(bit_string_content) + 0x00 + key_bytes
+    let bit_string_content_len = 1 + key_bytes.len(); // 0x00 unused-bits byte + key data
+    let bit_string_len = 1 + encoded_length_size(bit_string_content_len) + bit_string_content_len;
 
-    encode::encode_sequence(&[&alg_id, &bit_string], out);
+    // Outer SEQUENCE content = alg_id + bit_string
+    let seq_content_len = alg_id_len + bit_string_len;
+    let total = 1 + encoded_length_size(seq_content_len) + seq_content_len;
+    out.reserve(total);
+
+    // Write outer SEQUENCE
+    out.push(tags::TAG_SEQUENCE);
+    encode_length(seq_content_len, out);
+
+    // Write AlgorithmIdentifier directly
+    algorithm::encode_algorithm_identifier(algorithm, out);
+
+    // Write BIT STRING directly
+    encode::encode_bit_string(key_bytes, out);
 }
 
 /// Decode SPKI DER. Returns `(Algorithm, &key_bytes)` borrowing from input.
