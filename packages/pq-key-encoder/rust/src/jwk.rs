@@ -493,7 +493,7 @@ fn skip_json_number(bytes: &[u8], start: usize) -> Result<usize> {
 
 /// Zeroize all string values in a parsed fields vec to prevent private key
 /// material (the `"d"` field) from lingering in memory after parsing.
-fn zeroize_fields(fields: &mut Vec<(String, String)>) {
+fn zeroize_fields(fields: &mut [(String, String)]) {
     for (_, value) in fields.iter_mut() {
         value.zeroize();
     }
