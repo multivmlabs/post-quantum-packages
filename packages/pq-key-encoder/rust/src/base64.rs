@@ -215,12 +215,18 @@ fn decode_impl(input: &str, table: &[u8; 256]) -> Result<Vec<u8>> {
         }
     }
 
-    // Handle remainder
+    // Handle remainder — reject non-zero trailing bits per RFC 4648 §3.5
     match buf_pos {
         2 => {
+            if buf[1] & 0x0F != 0 {
+                return Err(Error::InvalidBase64("non-zero trailing bits"));
+            }
             out.push((buf[0] << 2) | (buf[1] >> 4));
         }
         3 => {
+            if buf[2] & 0x03 != 0 {
+                return Err(Error::InvalidBase64("non-zero trailing bits"));
+            }
             out.push((buf[0] << 2) | (buf[1] >> 4));
             out.push((buf[1] << 4) | (buf[2] >> 2));
         }
@@ -370,6 +376,36 @@ mod tests {
         // Padding in the middle should be rejected
         assert!(decode_base64("Zm=9v").is_err());
         assert!(decode_base64url("Zm=9v").is_err());
+    }
+
+    #[test]
+    fn test_decode_rejects_non_zero_trailing_bits_2char() {
+        // "AQ" decodes to [0x01] — canonical. But "AR" has low nibble 0x01
+        // in the second char, meaning 4 non-zero trailing bits.
+        // 'R' = index 17 = 0b010001; low 4 bits = 0x01, non-canonical.
+        let err = decode_base64("AR").unwrap_err();
+        assert!(matches!(err, Error::InvalidBase64("non-zero trailing bits")));
+        let err = decode_base64url("AR").unwrap_err();
+        assert!(matches!(err, Error::InvalidBase64("non-zero trailing bits")));
+    }
+
+    #[test]
+    fn test_decode_rejects_non_zero_trailing_bits_3char() {
+        // "AAB" = indices [0, 0, 1]; buf[2] & 0x03 = 1; non-canonical
+        let err = decode_base64("AAB").unwrap_err();
+        assert!(matches!(err, Error::InvalidBase64("non-zero trailing bits")));
+        let err = decode_base64url("AAB").unwrap_err();
+        assert!(matches!(err, Error::InvalidBase64("non-zero trailing bits")));
+    }
+
+    #[test]
+    fn test_decode_accepts_canonical_trailing_bits() {
+        // "AQ" = [0, 16] → low 4 bits of buf[1]=16=0b010000 are 0 → ok
+        assert_eq!(decode_base64("AQ").unwrap(), &[0x01]);
+        assert_eq!(decode_base64("AQ==").unwrap(), &[0x01]);
+        // "AAA" = [0, 0, 0] → low 2 bits of buf[2]=0 are 0 → ok
+        assert_eq!(decode_base64("AAA").unwrap(), &[0x00, 0x00]);
+        assert_eq!(decode_base64("AAA=").unwrap(), &[0x00, 0x00]);
     }
 
     #[test]
