@@ -491,6 +491,14 @@ fn skip_json_number(bytes: &[u8], start: usize) -> Result<usize> {
     Ok(pos)
 }
 
+/// Zeroize all string values in a parsed fields vec to prevent private key
+/// material (the `"d"` field) from lingering in memory after parsing.
+fn zeroize_fields(fields: &mut Vec<(String, String)>) {
+    for (_, value) in fields.iter_mut() {
+        value.zeroize();
+    }
+}
+
 /// Set a JWK field, rejecting duplicates of known fields.
 fn set_once(slot: &mut Option<String>, value: &str, field_name: &str) -> Result<()> {
     if slot.is_some() {
@@ -593,8 +601,10 @@ impl PrivateJwk {
 
     /// Parse from a JSON string.
     pub fn from_json(json: &str) -> Result<Self> {
-        let fields = parse_json_fields(json)?;
-        Self::from_fields(&fields)
+        let mut fields = parse_json_fields(json)?;
+        let result = Self::from_fields(&fields);
+        zeroize_fields(&mut fields);
+        result
     }
 
     /// Build from pre-parsed JSON fields (avoids double parsing in `Jwk::from_json`).
@@ -655,14 +665,16 @@ impl Jwk {
 
     /// Parse from a JSON string, auto-detecting public vs private by presence of `"d"` field.
     pub fn from_json(json: &str) -> Result<Self> {
-        let fields = parse_json_fields(json)?;
+        let mut fields = parse_json_fields(json)?;
         let has_d = fields.iter().any(|(k, _)| k == "d");
 
-        if has_d {
+        let result = if has_d {
             PrivateJwk::from_fields(&fields).map(Jwk::Private)
         } else {
             PublicJwk::from_fields(&fields).map(Jwk::Public)
-        }
+        };
+        zeroize_fields(&mut fields);
+        result
     }
 }
 
