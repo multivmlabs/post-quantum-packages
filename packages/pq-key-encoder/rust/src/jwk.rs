@@ -491,6 +491,22 @@ fn skip_json_number(bytes: &[u8], start: usize) -> Result<usize> {
     Ok(pos)
 }
 
+/// Set a JWK field, rejecting duplicates of known fields.
+fn set_once(slot: &mut Option<String>, value: &str, field_name: &str) -> Result<()> {
+    if slot.is_some() {
+        return match field_name {
+            "kty" => Err(Error::InvalidJwk("duplicate 'kty' field")),
+            "alg" => Err(Error::InvalidJwk("duplicate 'alg' field")),
+            "x" => Err(Error::InvalidJwk("duplicate 'x' field")),
+            "d" => Err(Error::InvalidJwk("duplicate 'd' field")),
+            "kid" => Err(Error::InvalidJwk("duplicate 'kid' field")),
+            _ => Err(Error::InvalidJwk("duplicate field")),
+        };
+    }
+    *slot = Some(String::from(value));
+    Ok(())
+}
+
 // =============================================================================
 // PublicJwk
 // =============================================================================
@@ -528,10 +544,10 @@ impl PublicJwk {
 
         for (key, value) in fields {
             match key.as_str() {
-                "kty" => kty = Some(value.clone()),
-                "alg" => alg = Some(value.clone()),
-                "x" => x = Some(value.clone()),
-                "kid" => kid = Some(value.clone()),
+                "kty" => set_once(&mut kty, value, "kty")?,
+                "alg" => set_once(&mut alg, value, "alg")?,
+                "x" => set_once(&mut x, value, "x")?,
+                "kid" => set_once(&mut kid, value, "kid")?,
                 _ => {} // ignore unknown keys for forward compatibility
             }
         }
@@ -591,11 +607,11 @@ impl PrivateJwk {
 
         for (key, value) in fields {
             match key.as_str() {
-                "kty" => kty = Some(value.clone()),
-                "alg" => alg = Some(value.clone()),
-                "x" => x = Some(value.clone()),
-                "d" => d = Some(value.clone()),
-                "kid" => kid = Some(value.clone()),
+                "kty" => set_once(&mut kty, value, "kty")?,
+                "alg" => set_once(&mut alg, value, "alg")?,
+                "x" => set_once(&mut x, value, "x")?,
+                "d" => set_once(&mut d, value, "d")?,
+                "kid" => set_once(&mut kid, value, "kid")?,
                 _ => {}
             }
         }
@@ -1060,6 +1076,27 @@ mod tests {
         // Raw NUL byte inside a JSON string value is invalid
         let json = "{\"kty\":\"PQC\",\"alg\":\"ML-KEM-512\",\"x\":\"AQ\x00ID\"}";
         assert!(PublicJwk::from_json(json).is_err());
+    }
+
+    #[test]
+    fn test_from_json_duplicate_kty_rejected() {
+        let json = r#"{"kty":"PQC","kty":"PQC","alg":"ML-KEM-512","x":"AQID"}"#;
+        let err = PublicJwk::from_json(json).unwrap_err();
+        assert!(matches!(err, Error::InvalidJwk(msg) if msg.contains("duplicate")));
+    }
+
+    #[test]
+    fn test_from_json_duplicate_alg_rejected() {
+        let json = r#"{"kty":"PQC","alg":"ML-KEM-512","alg":"ML-KEM-768","x":"AQID"}"#;
+        let err = PublicJwk::from_json(json).unwrap_err();
+        assert!(matches!(err, Error::InvalidJwk(msg) if msg.contains("duplicate")));
+    }
+
+    #[test]
+    fn test_from_json_duplicate_d_rejected() {
+        let json = r#"{"kty":"PQC","alg":"ML-KEM-512","x":"AQID","d":"BAUG","d":"BAUG"}"#;
+        let err = PrivateJwk::from_json(json).unwrap_err();
+        assert!(matches!(err, Error::InvalidJwk(msg) if msg.contains("duplicate")));
     }
 
     #[test]
