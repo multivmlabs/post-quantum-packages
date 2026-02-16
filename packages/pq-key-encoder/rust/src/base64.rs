@@ -384,18 +384,30 @@ mod tests {
         // in the second char, meaning 4 non-zero trailing bits.
         // 'R' = index 17 = 0b010001; low 4 bits = 0x01, non-canonical.
         let err = decode_base64("AR").unwrap_err();
-        assert!(matches!(err, Error::InvalidBase64("non-zero trailing bits")));
+        assert!(matches!(
+            err,
+            Error::InvalidBase64("non-zero trailing bits")
+        ));
         let err = decode_base64url("AR").unwrap_err();
-        assert!(matches!(err, Error::InvalidBase64("non-zero trailing bits")));
+        assert!(matches!(
+            err,
+            Error::InvalidBase64("non-zero trailing bits")
+        ));
     }
 
     #[test]
     fn test_decode_rejects_non_zero_trailing_bits_3char() {
         // "AAB" = indices [0, 0, 1]; buf[2] & 0x03 = 1; non-canonical
         let err = decode_base64("AAB").unwrap_err();
-        assert!(matches!(err, Error::InvalidBase64("non-zero trailing bits")));
+        assert!(matches!(
+            err,
+            Error::InvalidBase64("non-zero trailing bits")
+        ));
         let err = decode_base64url("AAB").unwrap_err();
-        assert!(matches!(err, Error::InvalidBase64("non-zero trailing bits")));
+        assert!(matches!(
+            err,
+            Error::InvalidBase64("non-zero trailing bits")
+        ));
     }
 
     #[test]

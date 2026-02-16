@@ -211,8 +211,7 @@ impl<'a> PrivateKeyRef<'a> {
     #[cfg(feature = "pem")]
     pub fn to_pem(&self) -> Zeroizing<String> {
         let mut der = self.to_pkcs8();
-        let pem =
-            crate::pem::encode_pem(&der, crate::pem::label_for_key_type(KeyType::Private));
+        let pem = crate::pem::encode_pem(&der, crate::pem::label_for_key_type(KeyType::Private));
         der.zeroize();
         Zeroizing::new(pem)
     }
