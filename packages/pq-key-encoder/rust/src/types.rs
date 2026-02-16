@@ -647,10 +647,9 @@ impl Key {
     /// Note: For private keys, prefer using `PrivateKey::to_der()` directly
     /// to get a `Zeroizing<Vec<u8>>` wrapper that auto-zeroizes on drop.
     pub fn to_der(&self) -> Vec<u8> {
-        match self {
-            Key::Public(k) => k.to_der(),
-            Key::Private(k) => (*k.to_der()).to_vec(),
-        }
+        let mut out = Vec::new();
+        self.encode_der_to(&mut out);
+        out
     }
 
     /// Encode this key as DER into the given buffer.
@@ -686,7 +685,15 @@ impl Key {
     pub fn to_pem(&self) -> String {
         match self {
             Key::Public(k) => k.to_pem(),
-            Key::Private(k) => (*k.to_pem()).to_string(),
+            Key::Private(k) => {
+                let mut der = k.to_pkcs8();
+                let pem = crate::pem::encode_pem(
+                    &der,
+                    crate::pem::label_for_key_type(KeyType::Private),
+                );
+                der.zeroize();
+                pem
+            }
         }
     }
 
