@@ -4,7 +4,7 @@ use core::fmt;
 use core::str::FromStr;
 
 use pq_oid::Algorithm;
-use zeroize::{Zeroize, ZeroizeOnDrop};
+use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
 use crate::base64;
 use crate::error::{Error, Result};
@@ -500,8 +500,12 @@ fn zeroize_fields(fields: &mut [(String, String)]) {
 }
 
 /// Set a JWK field, rejecting duplicates of known fields.
+/// Zeroizes any previously stored value before returning a duplicate error,
+/// so sensitive field data (e.g. `d`) does not linger in memory.
 fn set_once(slot: &mut Option<String>, value: &str, field_name: &str) -> Result<()> {
-    if slot.is_some() {
+    if let Some(existing) = slot.as_mut() {
+        existing.zeroize();
+        *slot = None;
         return match field_name {
             "kty" => Err(Error::InvalidJwk("duplicate 'kty' field")),
             "alg" => Err(Error::InvalidJwk("duplicate 'alg' field")),
@@ -608,19 +612,31 @@ impl PrivateJwk {
     }
 
     /// Build from pre-parsed JSON fields (avoids double parsing in `Jwk::from_json`).
+    /// Uses `Zeroizing<String>` for the sensitive `x` and `d` slots so that
+    /// key material is cleared on all error paths (not just the happy path).
     fn from_fields(fields: &[(String, String)]) -> Result<Self> {
         let mut kty = None;
         let mut alg = None;
-        let mut x = None;
-        let mut d = None;
+        let mut x: Option<Zeroizing<String>> = None;
+        let mut d: Option<Zeroizing<String>> = None;
         let mut kid = None;
 
         for (key, value) in fields {
             match key.as_str() {
                 "kty" => set_once(&mut kty, value, "kty")?,
                 "alg" => set_once(&mut alg, value, "alg")?,
-                "x" => set_once(&mut x, value, "x")?,
-                "d" => set_once(&mut d, value, "d")?,
+                "x" => {
+                    if x.is_some() {
+                        return Err(Error::InvalidJwk("duplicate 'x' field"));
+                    }
+                    x = Some(Zeroizing::new(String::from(value)));
+                }
+                "d" => {
+                    if d.is_some() {
+                        return Err(Error::InvalidJwk("duplicate 'd' field"));
+                    }
+                    d = Some(Zeroizing::new(String::from(value)));
+                }
                 "kid" => set_once(&mut kid, value, "kid")?,
                 _ => {}
             }
@@ -631,20 +647,22 @@ impl PrivateJwk {
             return Err(Error::InvalidJwk("kty must be 'PQC'"));
         }
         let alg = alg.ok_or(Error::InvalidJwk("missing 'alg' field"))?;
-        let x = x.ok_or(Error::InvalidJwk("missing 'x' field"))?;
+        let mut x = x.ok_or(Error::InvalidJwk("missing 'x' field"))?;
         if x.is_empty() {
             return Err(Error::InvalidJwk("'x' field must not be empty"));
         }
-        let d = d.ok_or(Error::InvalidJwk("missing 'd' field for private JWK"))?;
+        let mut d = d.ok_or(Error::InvalidJwk("missing 'd' field for private JWK"))?;
         if d.is_empty() {
             return Err(Error::InvalidJwk("'d' field must not be empty"));
         }
 
+        // Move inner strings out of Zeroizing wrappers. mem::take replaces
+        // the inner value with an empty String so the Zeroizing drop is a no-op.
         Ok(PrivateJwk {
             kty,
             alg,
-            x,
-            d,
+            x: core::mem::take(&mut *x),
+            d: core::mem::take(&mut *d),
             kid,
         })
     }
