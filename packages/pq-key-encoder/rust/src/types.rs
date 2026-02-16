@@ -687,10 +687,8 @@ impl Key {
             Key::Public(k) => k.to_pem(),
             Key::Private(k) => {
                 let mut der = k.to_pkcs8();
-                let pem = crate::pem::encode_pem(
-                    &der,
-                    crate::pem::label_for_key_type(KeyType::Private),
-                );
+                let pem =
+                    crate::pem::encode_pem(&der, crate::pem::label_for_key_type(KeyType::Private));
                 der.zeroize();
                 pem
             }
