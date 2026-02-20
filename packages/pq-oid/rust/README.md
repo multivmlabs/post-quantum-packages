@@ -1,6 +1,14 @@
 # pq-oid
 
+[![Crates.io](https://img.shields.io/crates/v/pq-oid)](https://crates.io/crates/pq-oid)
+[![docs.rs](https://img.shields.io/docsrs/pq-oid)](https://docs.rs/pq-oid)
+[![CI](https://github.com/multivmlabs/post-quantum-packages/actions/workflows/ci.yml/badge.svg)](https://github.com/multivmlabs/post-quantum-packages/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![MSRV](https://img.shields.io/badge/MSRV-1.78-blue.svg)](https://blog.rust-lang.org/2024/05/02/Rust-1.78.0.html)
+
 OID constants and utilities for NIST post-quantum algorithms (ML-KEM, ML-DSA, SLH-DSA).
+
+Zero dependencies. `no_std` compatible.
 
 ## Installation
 
@@ -74,28 +82,39 @@ assert_eq!(Algorithm::signatures().count(), 15);
 
 ## Features
 
-- `std` (default) - Enables `std::error::Error` impl for `Error` type
-- Works in `no_std` environments when default features are disabled
+| Feature | Default | Description |
+|---------|---------|-------------|
+| `std` | Yes | Enables `std::error::Error` impl for `Error` type |
+
+For `no_std` environments:
+
+```toml
+[dependencies]
+pq-oid = { version = "1.0", default-features = false }
+```
 
 ## Supported Algorithms
 
-### ML-KEM (FIPS 203) - Key Encapsulation
+### ML-KEM (FIPS 203) — Key Encapsulation
+
 | Algorithm | OID | Public Key | Private Key | Ciphertext |
-|-----------|-----|------------|-------------|------------|
+|-----------|-----|-----------|-------------|------------|
 | ML-KEM-512 | 2.16.840.1.101.3.4.4.1 | 800 | 1632 | 768 |
 | ML-KEM-768 | 2.16.840.1.101.3.4.4.2 | 1184 | 2400 | 1088 |
 | ML-KEM-1024 | 2.16.840.1.101.3.4.4.3 | 1568 | 3168 | 1568 |
 
-### ML-DSA (FIPS 204) - Digital Signatures
+### ML-DSA (FIPS 204) — Digital Signatures
+
 | Algorithm | OID | Public Key | Private Key | Signature |
-|-----------|-----|------------|-------------|-----------|
+|-----------|-----|-----------|-------------|-----------|
 | ML-DSA-44 | 2.16.840.1.101.3.4.3.17 | 1312 | 2560 | 2420 |
 | ML-DSA-65 | 2.16.840.1.101.3.4.3.18 | 1952 | 4032 | 3309 |
 | ML-DSA-87 | 2.16.840.1.101.3.4.3.19 | 2592 | 4896 | 4627 |
 
-### SLH-DSA (FIPS 205) - Stateless Hash-Based Signatures
+### SLH-DSA (FIPS 205) — Stateless Hash-Based Signatures
+
 | Algorithm | OID | Public Key | Private Key | Signature |
-|-----------|-----|------------|-------------|-----------|
+|-----------|-----|-----------|-------------|-----------|
 | SLH-DSA-SHA2-128s | 2.16.840.1.101.3.4.3.20 | 32 | 64 | 7856 |
 | SLH-DSA-SHA2-128f | 2.16.840.1.101.3.4.3.21 | 32 | 64 | 17088 |
 | SLH-DSA-SHA2-192s | 2.16.840.1.101.3.4.3.22 | 48 | 96 | 16224 |
@@ -108,6 +127,14 @@ assert_eq!(Algorithm::signatures().count(), 15);
 | SLH-DSA-SHAKE-192f | 2.16.840.1.101.3.4.3.29 | 48 | 96 | 35664 |
 | SLH-DSA-SHAKE-256s | 2.16.840.1.101.3.4.3.30 | 64 | 128 | 29792 |
 | SLH-DSA-SHAKE-256f | 2.16.840.1.101.3.4.3.31 | 64 | 128 | 49856 |
+
+## Minimum Supported Rust Version
+
+This crate requires **Rust 1.78** or later. The MSRV is tested in CI and will only be bumped in minor or major version releases.
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/multivmlabs/post-quantum-packages).
 
 ## License
 

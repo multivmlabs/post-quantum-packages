@@ -2,9 +2,13 @@
 name = "pq-oid"
 version = "1.0.2"
 edition = "2021"
+rust-version = "1.78"
 description = "OID constants for all PQ algorithms (ML-KEM, ML-DSA, SLH-DSA)"
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/multivmlabs/post-quantum-packages/tree/main/packages/pq-oid/rust"
+homepage = "https://github.com/multivmlabs/post-quantum-packages"
+documentation = "https://docs.rs/pq-oid"
 keywords = ["post-quantum", "cryptography", "pqc"]
 categories = ["cryptography"]
 
