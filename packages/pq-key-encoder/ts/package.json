@@ -1,6 +1,6 @@
 {
   "name": "pq-key-encoder",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Post-quantum key encoding utilities",
   "type": "module",
   "main": "./dist/index.js",
