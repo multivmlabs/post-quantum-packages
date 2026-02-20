@@ -118,11 +118,15 @@ fn hex_digit(n: u8) -> char {
 /// Only handles string values — non-string values are skipped.
 fn parse_json_fields(json: &str) -> Result<Vec<(String, String)>> {
     let trimmed = json.trim();
+    if trimmed.len() > MAX_JSON_SIZE {
+        return Err(Error::InvalidJwk("JWK input exceeds maximum size"));
+    }
     if !trimmed.starts_with('{') || !trimmed.ends_with('}') {
         return Err(Error::InvalidJwk("expected JSON object"));
     }
     let inner = &trimmed[1..trimmed.len() - 1];
     let mut fields = Vec::new();
+    let mut field_count: usize = 0;
     let mut pos = 0;
     let bytes = inner.as_bytes();
     let mut expect_comma = false;
@@ -207,6 +211,10 @@ fn parse_json_fields(json: &str) -> Result<Vec<(String, String)>> {
             }
             // Unknown field — skip it (could be number, bool, null, object, array)
             pos = skip_json_value(bytes, pos)?;
+        }
+        field_count += 1;
+        if field_count > MAX_JSON_FIELDS {
+            return Err(Error::InvalidJwk("too many fields in JWK object"));
         }
         expect_comma = true;
     }
@@ -334,7 +342,9 @@ fn parse_hex_u16(hex: &[u8]) -> Result<u16> {
 }
 
 /// Maximum nesting depth for unknown JSON values (objects/arrays).
-const MAX_JSON_DEPTH: usize = 128;
+const MAX_JSON_SIZE: usize = 65_536;
+const MAX_JSON_FIELDS: usize = 32;
+const MAX_JSON_DEPTH: usize = 8;
 
 /// Skip a non-string JSON value (number, bool, null, nested object/array).
 /// Returns position after the value.
