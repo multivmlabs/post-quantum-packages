@@ -48,4 +48,52 @@ describe('base64 utilities', () => {
   it('rejects invalid base64 length', () => {
     expect(() => decodeBase64('abcde')).toThrow(InvalidEncodingError);
   });
+
+  // RFC 4648 §3.5 trailing bits validation (matching Rust behavior)
+
+  it('rejects non-zero trailing bits for 2-char remainder', () => {
+    // "AR" = indices [0, 17]; 17 & 0x0F = 1, non-zero trailing bits
+    expect(() => decodeBase64('AR')).toThrow(InvalidEncodingError);
+    expect(() => decodeBase64('AR==')).toThrow(InvalidEncodingError);
+  });
+
+  it('rejects non-zero trailing bits for 3-char remainder', () => {
+    // "AAB" = indices [0, 0, 1]; 1 & 0x03 = 1, non-zero trailing bits
+    expect(() => decodeBase64('AAB')).toThrow(InvalidEncodingError);
+    expect(() => decodeBase64('AAB=')).toThrow(InvalidEncodingError);
+  });
+
+  it('accepts canonical trailing bits', () => {
+    // "AQ" = [0, 16]; 16 & 0x0F = 0, ok
+    expect(Array.from(decodeBase64('AQ'))).toEqual([0x01]);
+    expect(Array.from(decodeBase64('AQ=='))).toEqual([0x01]);
+    // "AAA" = [0, 0, 0]; 0 & 0x03 = 0, ok
+    expect(Array.from(decodeBase64('AAA'))).toEqual([0x00, 0x00]);
+    expect(Array.from(decodeBase64('AAA='))).toEqual([0x00, 0x00]);
+  });
+
+  it('rejects non-zero trailing bits in base64url', () => {
+    expect(() => decodeBase64Url('AR')).toThrow(InvalidEncodingError);
+    expect(() => decodeBase64Url('AAB')).toThrow(InvalidEncodingError);
+  });
+
+  it('round-trips various lengths', () => {
+    for (let len = 0; len <= 50; len++) {
+      const data = new Uint8Array(len);
+      for (let i = 0; i < len; i++) data[i] = i & 0xff;
+      const encoded = encodeBase64(data);
+      const decoded = decodeBase64(encoded);
+      expect(Array.from(decoded)).toEqual(Array.from(data));
+    }
+  });
+
+  it('round-trips base64url various lengths', () => {
+    for (let len = 0; len <= 50; len++) {
+      const data = new Uint8Array(len);
+      for (let i = 0; i < len; i++) data[i] = i & 0xff;
+      const encoded = encodeBase64Url(data);
+      const decoded = decodeBase64Url(encoded);
+      expect(Array.from(decoded)).toEqual(Array.from(data));
+    }
+  });
 });
