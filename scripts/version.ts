@@ -180,8 +180,16 @@ async function main() {
 	await handler.setVersion(dir, newVersion);
 	console.log(`Updated ${handler.file}`);
 
+	// Update lockfile for TypeScript packages so CI `bun ci` (--frozen-lockfile) passes
+	if (language === "ts") {
+		await $`bun install`;
+		console.log("Updated bun.lock");
+	}
+
 	// Git operations
-	await $`git add ${configFile}`;
+	const filesToStage = [configFile];
+	if (language === "ts") filesToStage.push("bun.lock");
+	await $`git add ${filesToStage}`;
 	await $`git commit -m "chore(${pkg}): bump ${language} version to ${newVersion}"`;
 	console.log("Created commit");
 
