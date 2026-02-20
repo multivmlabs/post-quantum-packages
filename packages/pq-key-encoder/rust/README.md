@@ -1,5 +1,11 @@
 # pq-key-encoder
 
+[![Crates.io](https://img.shields.io/crates/v/pq-key-encoder)](https://crates.io/crates/pq-key-encoder)
+[![docs.rs](https://img.shields.io/docsrs/pq-key-encoder)](https://docs.rs/pq-key-encoder)
+[![CI](https://github.com/multivmlabs/post-quantum-packages/actions/workflows/ci.yml/badge.svg)](https://github.com/multivmlabs/post-quantum-packages/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![MSRV](https://img.shields.io/badge/MSRV-1.78-blue.svg)](https://blog.rust-lang.org/2024/05/02/Rust-1.78.0.html)
+
 Zero-dependency\* post-quantum key encoding library for Rust. Encodes and decodes **ML-KEM**, **ML-DSA**, and **SLH-DSA** keys across DER (SPKI/PKCS#8), PEM, and JWK formats.
 
 \*Only depends on [`pq-oid`](https://crates.io/crates/pq-oid) and [`zeroize`](https://crates.io/crates/zeroize).
@@ -148,6 +154,11 @@ let key = Key::from_pem(&pem_string)?;
 - `PrivateKey::into_bytes()` returns `Zeroizing<Vec<u8>>` for safe ownership transfer
 - `PrivateJwk` fields are zeroized on drop
 - Base64 decoding enforces **strict padding** validation
+- JWK parser **rejects duplicate fields** to prevent key confusion attacks
+- JWK parsing enforces **resource limits** to prevent denial-of-service:
+  - Input size capped at **64 KiB**
+  - Field count capped at **32**
+  - Nesting depth capped at **8**
 
 ## Design
 
@@ -156,6 +167,14 @@ let key = Key::from_pem(&pem_string)?;
 - **Zero intermediate allocations** on encode paths — two-pass pattern computes size first, then writes directly to the output buffer
 - **No format-specific dependencies** — DER, PEM, base64, and JSON are all hand-rolled with minimal code
 - OID matching uses **raw DER byte comparison** against compile-time constants (no string allocation)
+
+## Minimum Supported Rust Version
+
+This crate requires **Rust 1.78** or later. The MSRV is tested in CI and will only be bumped in minor or major version releases.
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/multivmlabs/post-quantum-packages).
 
 ## License
 

@@ -2,9 +2,13 @@
 name = "pq-key-encoder"
 version = "0.0.1"
 edition = "2021"
+rust-version = "1.78"
 description = "Post-quantum key encoding (DER, PEM, JWK) for ML-KEM, ML-DSA, SLH-DSA"
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/multivmlabs/post-quantum-packages/tree/main/packages/pq-key-encoder/rust"
+homepage = "https://github.com/multivmlabs/post-quantum-packages"
+documentation = "https://docs.rs/pq-key-encoder"
 keywords = ["post-quantum", "cryptography", "key-encoding", "pqc", "der"]
 categories = ["cryptography", "encoding"]
 
