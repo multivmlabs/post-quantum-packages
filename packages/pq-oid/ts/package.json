@@ -20,6 +20,12 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/multivmlabs/post-quantum-packages",
+    "directory": "packages/pq-oid/ts"
+  },
+  "homepage": "https://github.com/multivmlabs/post-quantum-packages/tree/main/packages/pq-oid/ts",
   "devDependencies": {
     "typescript": "^5.0.0"
   }
