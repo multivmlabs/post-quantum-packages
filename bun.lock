@@ -143,9 +143,9 @@
     },
     "packages/pq-key-encoder/ts": {
       "name": "pq-key-encoder",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
-        "pq-oid": "0.0.1",
+        "pq-oid": "^1.0.1",
       },
       "devDependencies": {
         "typescript": "^5.0.0",
@@ -391,7 +391,5 @@
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "undici-types": ["undici-types@7.16.0", "", {}, "sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw=="],
-
-    "pq-key-encoder/pq-oid": ["pq-oid@0.0.1", "", {}, "sha512-NDbWTY4O3yC+rR28kh4LJV7+pps35mxnz4UMQNN2u49dm8wHbHJ2JATI6vDL3zyBc3sTcub4WvAkq5mqCYUpvw=="],
   }
 }

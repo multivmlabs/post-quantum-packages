@@ -22,7 +22,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "pq-oid": "0.0.1"
+    "pq-oid": "^1.0.1"
   },
   "devDependencies": {
     "typescript": "^5.0.0"
