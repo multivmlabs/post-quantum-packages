@@ -1,6 +1,6 @@
 [package]
 name = "pq-key-encoder"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 rust-version = "1.78"
 description = "Post-quantum key encoding (DER, PEM, JWK) for ML-KEM, ML-DSA, SLH-DSA"
