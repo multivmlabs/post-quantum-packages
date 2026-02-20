@@ -1,5 +1,3 @@
-use alloc::string::String;
-
 use crate::error::{Error, Result};
 
 use super::length::decode_length;
@@ -39,16 +37,15 @@ pub(crate) fn read_tlv(input: &[u8], offset: usize) -> Result<Tlv<'_>> {
     })
 }
 
-/// Decode an OID from raw DER value bytes (without tag/length).
-/// Returns dotted notation string like "2.16.840.1.101.3.4.4.1".
-#[allow(dead_code)]
-pub(crate) fn decode_oid(bytes: &[u8]) -> Result<String> {
-    Ok(pq_oid::decode_oid(bytes)?)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Decode an OID from raw DER value bytes (without tag/length).
+    /// Returns dotted notation string like "2.16.840.1.101.3.4.4.1".
+    fn decode_oid(bytes: &[u8]) -> Result<alloc::string::String> {
+        Ok(pq_oid::decode_oid(bytes)?)
+    }
 
     #[test]
     fn test_read_tlv_simple() {

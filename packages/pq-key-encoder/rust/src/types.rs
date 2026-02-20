@@ -4,7 +4,7 @@ use core::fmt;
 use alloc::string::String;
 use alloc::vec::Vec;
 use pq_oid::Algorithm;
-use zeroize::{Zeroize, ZeroizeOnDrop};
+use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
 use crate::error::Result;
 use crate::validation::validate_key_size;
@@ -184,30 +184,36 @@ impl<'a> PrivateKeyRef<'a> {
         self.encode_pkcs8_to(out);
     }
 
-    /// Encode this private key as PKCS8 DER, returning a new `Vec<u8>`.
-    pub fn to_pkcs8(&self) -> Vec<u8> {
+    /// Encode this private key as PKCS8 DER, returning a `Zeroizing<Vec<u8>>`.
+    /// The returned wrapper automatically zeroizes the DER bytes on drop.
+    pub fn to_pkcs8(&self) -> Zeroizing<Vec<u8>> {
         let mut out = Vec::new();
         self.encode_pkcs8_to(&mut out);
-        out
+        Zeroizing::new(out)
     }
 
-    /// Encode this private key as DER, returning a new `Vec<u8>` (alias for `to_pkcs8`).
-    pub fn to_der(&self) -> Vec<u8> {
+    /// Encode this private key as DER, returning a `Zeroizing<Vec<u8>>` (alias for `to_pkcs8`).
+    /// The returned wrapper automatically zeroizes the DER bytes on drop.
+    pub fn to_der(&self) -> Zeroizing<Vec<u8>> {
         self.to_pkcs8()
     }
 
     /// Encode this private key as PEM, appending directly to `out`.
     #[cfg(feature = "pem")]
     pub fn encode_pem_to(&self, out: &mut String) {
-        let der = self.to_pkcs8();
+        let mut der = self.to_pkcs8();
         crate::pem::encode_pem_to(&der, crate::pem::label_for_key_type(KeyType::Private), out);
+        der.zeroize();
     }
 
-    /// Encode this private key as PEM.
+    /// Encode this private key as PEM, returning a `Zeroizing<String>`.
+    /// The returned wrapper automatically zeroizes the PEM string on drop.
     #[cfg(feature = "pem")]
-    pub fn to_pem(&self) -> String {
-        let der = self.to_pkcs8();
-        crate::pem::encode_pem(&der, crate::pem::label_for_key_type(KeyType::Private))
+    pub fn to_pem(&self) -> Zeroizing<String> {
+        let mut der = self.to_pkcs8();
+        let pem = crate::pem::encode_pem(&der, crate::pem::label_for_key_type(KeyType::Private));
+        der.zeroize();
+        Zeroizing::new(pem)
     }
 
     /// Encode this private key as a JWK. Requires the corresponding public key.
@@ -459,13 +465,15 @@ impl PrivateKey {
         self.as_key_ref().encode_der_to(out);
     }
 
-    /// Encode this private key as PKCS8 DER, returning a new `Vec<u8>`.
-    pub fn to_pkcs8(&self) -> Vec<u8> {
+    /// Encode this private key as PKCS8 DER, returning a `Zeroizing<Vec<u8>>`.
+    /// The returned wrapper automatically zeroizes the DER bytes on drop.
+    pub fn to_pkcs8(&self) -> Zeroizing<Vec<u8>> {
         self.as_key_ref().to_pkcs8()
     }
 
-    /// Encode this private key as DER, returning a new `Vec<u8>`.
-    pub fn to_der(&self) -> Vec<u8> {
+    /// Encode this private key as DER, returning a `Zeroizing<Vec<u8>>`.
+    /// The returned wrapper automatically zeroizes the DER bytes on drop.
+    pub fn to_der(&self) -> Zeroizing<Vec<u8>> {
         self.as_key_ref().to_der()
     }
 
@@ -481,9 +489,10 @@ impl PrivateKey {
         Self::from_pkcs8(&der)
     }
 
-    /// Encode this private key as PEM.
+    /// Encode this private key as PEM, returning a `Zeroizing<String>`.
+    /// The returned wrapper automatically zeroizes the PEM string on drop.
     #[cfg(feature = "pem")]
-    pub fn to_pem(&self) -> String {
+    pub fn to_pem(&self) -> Zeroizing<String> {
         self.as_key_ref().to_pem()
     }
 
@@ -634,11 +643,13 @@ impl Key {
     }
 
     /// Encode this key as DER, returning a new `Vec<u8>`.
+    ///
+    /// Note: For private keys, prefer using `PrivateKey::to_der()` directly
+    /// to get a `Zeroizing<Vec<u8>>` wrapper that auto-zeroizes on drop.
     pub fn to_der(&self) -> Vec<u8> {
-        match self {
-            Key::Public(k) => k.to_der(),
-            Key::Private(k) => k.to_der(),
-        }
+        let mut out = Vec::new();
+        self.encode_der_to(&mut out);
+        out
     }
 
     /// Encode this key as DER into the given buffer.
@@ -667,11 +678,20 @@ impl Key {
     }
 
     /// Encode this key as PEM.
+    ///
+    /// Note: For private keys, prefer using `PrivateKey::to_pem()` directly
+    /// to get a `Zeroizing<String>` wrapper that auto-zeroizes on drop.
     #[cfg(feature = "pem")]
     pub fn to_pem(&self) -> String {
         match self {
             Key::Public(k) => k.to_pem(),
-            Key::Private(k) => k.to_pem(),
+            Key::Private(k) => {
+                let mut der = k.to_pkcs8();
+                let pem =
+                    crate::pem::encode_pem(&der, crate::pem::label_for_key_type(KeyType::Private));
+                der.zeroize();
+                pem
+            }
         }
     }
 

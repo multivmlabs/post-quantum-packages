@@ -4,7 +4,7 @@ use core::fmt;
 use core::str::FromStr;
 
 use pq_oid::Algorithm;
-use zeroize::{Zeroize, ZeroizeOnDrop};
+use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
 use crate::base64;
 use crate::error::{Error, Result};
@@ -118,11 +118,15 @@ fn hex_digit(n: u8) -> char {
 /// Only handles string values — non-string values are skipped.
 fn parse_json_fields(json: &str) -> Result<Vec<(String, String)>> {
     let trimmed = json.trim();
+    if trimmed.len() > MAX_JSON_SIZE {
+        return Err(Error::InvalidJwk("JWK input exceeds maximum size"));
+    }
     if !trimmed.starts_with('{') || !trimmed.ends_with('}') {
         return Err(Error::InvalidJwk("expected JSON object"));
     }
     let inner = &trimmed[1..trimmed.len() - 1];
     let mut fields = Vec::new();
+    let mut field_count: usize = 0;
     let mut pos = 0;
     let bytes = inner.as_bytes();
     let mut expect_comma = false;
@@ -207,6 +211,10 @@ fn parse_json_fields(json: &str) -> Result<Vec<(String, String)>> {
             }
             // Unknown field — skip it (could be number, bool, null, object, array)
             pos = skip_json_value(bytes, pos)?;
+        }
+        field_count += 1;
+        if field_count > MAX_JSON_FIELDS {
+            return Err(Error::InvalidJwk("too many fields in JWK object"));
         }
         expect_comma = true;
     }
@@ -334,7 +342,9 @@ fn parse_hex_u16(hex: &[u8]) -> Result<u16> {
 }
 
 /// Maximum nesting depth for unknown JSON values (objects/arrays).
-const MAX_JSON_DEPTH: usize = 128;
+const MAX_JSON_SIZE: usize = 65_536;
+const MAX_JSON_FIELDS: usize = 32;
+const MAX_JSON_DEPTH: usize = 8;
 
 /// Skip a non-string JSON value (number, bool, null, nested object/array).
 /// Returns position after the value.
@@ -491,6 +501,34 @@ fn skip_json_number(bytes: &[u8], start: usize) -> Result<usize> {
     Ok(pos)
 }
 
+/// Zeroize all string values in a parsed fields vec to prevent private key
+/// material (the `"d"` field) from lingering in memory after parsing.
+fn zeroize_fields(fields: &mut [(String, String)]) {
+    for (_, value) in fields.iter_mut() {
+        value.zeroize();
+    }
+}
+
+/// Set a JWK field, rejecting duplicates of known fields.
+/// Zeroizes any previously stored value before returning a duplicate error,
+/// so sensitive field data (e.g. `d`) does not linger in memory.
+fn set_once(slot: &mut Option<String>, value: &str, field_name: &str) -> Result<()> {
+    if let Some(existing) = slot.as_mut() {
+        existing.zeroize();
+        *slot = None;
+        return match field_name {
+            "kty" => Err(Error::InvalidJwk("duplicate 'kty' field")),
+            "alg" => Err(Error::InvalidJwk("duplicate 'alg' field")),
+            "x" => Err(Error::InvalidJwk("duplicate 'x' field")),
+            "d" => Err(Error::InvalidJwk("duplicate 'd' field")),
+            "kid" => Err(Error::InvalidJwk("duplicate 'kid' field")),
+            _ => Err(Error::InvalidJwk("duplicate field")),
+        };
+    }
+    *slot = Some(String::from(value));
+    Ok(())
+}
+
 // =============================================================================
 // PublicJwk
 // =============================================================================
@@ -528,10 +566,10 @@ impl PublicJwk {
 
         for (key, value) in fields {
             match key.as_str() {
-                "kty" => kty = Some(value.clone()),
-                "alg" => alg = Some(value.clone()),
-                "x" => x = Some(value.clone()),
-                "kid" => kid = Some(value.clone()),
+                "kty" => set_once(&mut kty, value, "kty")?,
+                "alg" => set_once(&mut alg, value, "alg")?,
+                "x" => set_once(&mut x, value, "x")?,
+                "kid" => set_once(&mut kid, value, "kid")?,
                 _ => {} // ignore unknown keys for forward compatibility
             }
         }
@@ -577,25 +615,39 @@ impl PrivateJwk {
 
     /// Parse from a JSON string.
     pub fn from_json(json: &str) -> Result<Self> {
-        let fields = parse_json_fields(json)?;
-        Self::from_fields(&fields)
+        let mut fields = parse_json_fields(json)?;
+        let result = Self::from_fields(&fields);
+        zeroize_fields(&mut fields);
+        result
     }
 
     /// Build from pre-parsed JSON fields (avoids double parsing in `Jwk::from_json`).
+    /// Uses `Zeroizing<String>` for the sensitive `x` and `d` slots so that
+    /// key material is cleared on all error paths (not just the happy path).
     fn from_fields(fields: &[(String, String)]) -> Result<Self> {
         let mut kty = None;
         let mut alg = None;
-        let mut x = None;
-        let mut d = None;
+        let mut x: Option<Zeroizing<String>> = None;
+        let mut d: Option<Zeroizing<String>> = None;
         let mut kid = None;
 
         for (key, value) in fields {
             match key.as_str() {
-                "kty" => kty = Some(value.clone()),
-                "alg" => alg = Some(value.clone()),
-                "x" => x = Some(value.clone()),
-                "d" => d = Some(value.clone()),
-                "kid" => kid = Some(value.clone()),
+                "kty" => set_once(&mut kty, value, "kty")?,
+                "alg" => set_once(&mut alg, value, "alg")?,
+                "x" => {
+                    if x.is_some() {
+                        return Err(Error::InvalidJwk("duplicate 'x' field"));
+                    }
+                    x = Some(Zeroizing::new(String::from(value)));
+                }
+                "d" => {
+                    if d.is_some() {
+                        return Err(Error::InvalidJwk("duplicate 'd' field"));
+                    }
+                    d = Some(Zeroizing::new(String::from(value)));
+                }
+                "kid" => set_once(&mut kid, value, "kid")?,
                 _ => {}
             }
         }
@@ -605,20 +657,22 @@ impl PrivateJwk {
             return Err(Error::InvalidJwk("kty must be 'PQC'"));
         }
         let alg = alg.ok_or(Error::InvalidJwk("missing 'alg' field"))?;
-        let x = x.ok_or(Error::InvalidJwk("missing 'x' field"))?;
+        let mut x = x.ok_or(Error::InvalidJwk("missing 'x' field"))?;
         if x.is_empty() {
             return Err(Error::InvalidJwk("'x' field must not be empty"));
         }
-        let d = d.ok_or(Error::InvalidJwk("missing 'd' field for private JWK"))?;
+        let mut d = d.ok_or(Error::InvalidJwk("missing 'd' field for private JWK"))?;
         if d.is_empty() {
             return Err(Error::InvalidJwk("'d' field must not be empty"));
         }
 
+        // Move inner strings out of Zeroizing wrappers. mem::take replaces
+        // the inner value with an empty String so the Zeroizing drop is a no-op.
         Ok(PrivateJwk {
             kty,
             alg,
-            x,
-            d,
+            x: core::mem::take(&mut *x),
+            d: core::mem::take(&mut *d),
             kid,
         })
     }
@@ -639,14 +693,16 @@ impl Jwk {
 
     /// Parse from a JSON string, auto-detecting public vs private by presence of `"d"` field.
     pub fn from_json(json: &str) -> Result<Self> {
-        let fields = parse_json_fields(json)?;
+        let mut fields = parse_json_fields(json)?;
         let has_d = fields.iter().any(|(k, _)| k == "d");
 
-        if has_d {
+        let result = if has_d {
             PrivateJwk::from_fields(&fields).map(Jwk::Private)
         } else {
             PublicJwk::from_fields(&fields).map(Jwk::Public)
-        }
+        };
+        zeroize_fields(&mut fields);
+        result
     }
 }
 
@@ -1060,6 +1116,27 @@ mod tests {
         // Raw NUL byte inside a JSON string value is invalid
         let json = "{\"kty\":\"PQC\",\"alg\":\"ML-KEM-512\",\"x\":\"AQ\x00ID\"}";
         assert!(PublicJwk::from_json(json).is_err());
+    }
+
+    #[test]
+    fn test_from_json_duplicate_kty_rejected() {
+        let json = r#"{"kty":"PQC","kty":"PQC","alg":"ML-KEM-512","x":"AQID"}"#;
+        let err = PublicJwk::from_json(json).unwrap_err();
+        assert!(matches!(err, Error::InvalidJwk(msg) if msg.contains("duplicate")));
+    }
+
+    #[test]
+    fn test_from_json_duplicate_alg_rejected() {
+        let json = r#"{"kty":"PQC","alg":"ML-KEM-512","alg":"ML-KEM-768","x":"AQID"}"#;
+        let err = PublicJwk::from_json(json).unwrap_err();
+        assert!(matches!(err, Error::InvalidJwk(msg) if msg.contains("duplicate")));
+    }
+
+    #[test]
+    fn test_from_json_duplicate_d_rejected() {
+        let json = r#"{"kty":"PQC","alg":"ML-KEM-512","x":"AQID","d":"BAUG","d":"BAUG"}"#;
+        let err = PrivateJwk::from_json(json).unwrap_err();
+        assert!(matches!(err, Error::InvalidJwk(msg) if msg.contains("duplicate")));
     }
 
     #[test]
