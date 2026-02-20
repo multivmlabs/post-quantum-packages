@@ -19,5 +19,5 @@ pem = []
 jwk = []
 
 [dependencies]
-pq-oid = { path = "../../pq-oid/rust" }
+pq-oid = { version = "1.0.3", path = "../../pq-oid/rust" }
 zeroize = { version = "1", default-features = false, features = ["alloc", "derive"] }
