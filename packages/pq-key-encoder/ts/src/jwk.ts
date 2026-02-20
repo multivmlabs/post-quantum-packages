@@ -77,7 +77,12 @@ function extractTopLevelKeys(json: string): string[] {
         let j = i;
         while (j < len && (json[j] === ' ' || json[j] === '\t' || json[j] === '\n' || json[j] === '\r')) j++;
         if (j < len && json[j] === ':') {
-          keys.push(json.slice(start, end));
+          const raw = json.slice(start, end);
+          try {
+            keys.push(JSON.parse(`"${raw}"`));
+          } catch {
+            keys.push(raw);
+          }
         }
       }
     } else if (ch === '{' || ch === '[') {

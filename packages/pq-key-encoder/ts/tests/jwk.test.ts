@@ -206,6 +206,13 @@ describe('jwk', () => {
     expect(() => fromJWKString(json)).toThrow(/Duplicate 'alg'/);
   });
 
+  it('rejects duplicate known fields via unicode escape', () => {
+    const x = encodeBase64Url(makeKey(800));
+    // \u0061lg is "alg" after JSON unescaping
+    const json = `{"kty":"PQC","alg":"ML-KEM-512","x":"${x}","\\u0061lg":"ML-DSA-44"}`;
+    expect(() => fromJWKString(json)).toThrow(/Duplicate 'alg'/);
+  });
+
   it('rejects duplicate kty field', () => {
     const x = encodeBase64Url(makeKey(800));
     const json = `{"kty":"PQC","kty":"PQC","alg":"ML-KEM-512","x":"${x}"}`;
