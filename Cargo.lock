@@ -80,7 +80,7 @@ version = "0.0.1"
 
 [[package]]
 name = "pq-key-encoder"
-version = "0.0.1"
+version = "1.0.1"
 dependencies = [
  "pq-oid",
  "zeroize",
@@ -100,7 +100,7 @@ version = "0.0.1"
 
 [[package]]
 name = "pq-oid"
-version = "1.0.2"
+version = "1.0.3"
 
 [[package]]
 name = "pq-pkcs7"

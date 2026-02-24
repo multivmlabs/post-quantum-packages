@@ -2,6 +2,12 @@ import { InvalidEncodingError } from '../errors';
 
 const BASE64_PATTERN = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 
+const BASE64_VALUES: Record<string, number> = {};
+const BASE64_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+for (let i = 0; i < BASE64_ALPHABET.length; i += 1) {
+  BASE64_VALUES[BASE64_ALPHABET[i]] = i;
+}
+
 declare const Buffer:
   | {
       from(data: Uint8Array): { toString(encoding: 'base64'): string };
@@ -30,6 +36,21 @@ function binaryStringToBytes(input: string): Uint8Array {
     bytes[i] = input.charCodeAt(i);
   }
   return bytes;
+}
+
+/** Validate that trailing bits in base64 are zero (RFC 4648 §3.5). */
+function validateTrailingBits(normalized: string): void {
+  const unpadded = normalized.replace(/=+$/, '');
+  const remainder = unpadded.length % 4;
+  if (remainder === 2) {
+    if ((BASE64_VALUES[unpadded[unpadded.length - 1]] & 0x0f) !== 0) {
+      throw new InvalidEncodingError('Non-zero trailing bits in base64.');
+    }
+  } else if (remainder === 3) {
+    if ((BASE64_VALUES[unpadded[unpadded.length - 1]] & 0x03) !== 0) {
+      throw new InvalidEncodingError('Non-zero trailing bits in base64.');
+    }
+  }
 }
 
 /** Normalize base64 input by stripping whitespace and padding. */
@@ -75,6 +96,7 @@ export function decodeBase64(input: string): Uint8Array {
   if (normalized.length === 0) {
     return new Uint8Array();
   }
+  validateTrailingBits(normalized);
   if (typeof globalThis.atob === 'function') {
     return binaryStringToBytes(globalThis.atob(normalized));
   }

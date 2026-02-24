@@ -32,4 +32,5 @@ export type PQJwk = PQPublicJwk | PQPrivateJwk;
 export type JwkExportOptions = {
   includePrivate?: boolean;
   publicKey?: Uint8Array;
+  kid?: string;
 };
