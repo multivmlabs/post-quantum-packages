@@ -55,15 +55,15 @@ Every package is implemented in TypeScript and Rust with consistent APIs.
 
 > **Version guide**: Packages at `v0.0.1` are scaffolded but not yet implemented. Versions `≥ 1.0.0` are production-ready.
 >
-> **Audit status**: Packages under active audit are marked accordingly. Remaining packages are pending audit as implementations mature.
+> **Audit status**: Packages with a pending audit are marked accordingly. Remaining packages will be scheduled as implementations mature.
 
 ### Core
 
 | Package | Description | npm | crates.io | Audit |
 |---------|-------------|-----|-----------|-------|
-| [`pq-oid`](packages/pq-oid) | OID constants for ML-KEM, ML-DSA, SLH-DSA | [![npm](https://img.shields.io/npm/v/pq-oid?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-oid) | [![crates.io](https://img.shields.io/crates/v/pq-oid?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-oid) | In progress |
+| [`pq-oid`](packages/pq-oid) | OID constants for ML-KEM, ML-DSA, SLH-DSA | [![npm](https://img.shields.io/npm/v/pq-oid?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-oid) | [![crates.io](https://img.shields.io/crates/v/pq-oid?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-oid) | Pending |
 | [`pq-algorithm-id`](packages/pq-algorithm-id) | Algorithm identifier mappings (JOSE, COSE, X.509) | [![npm](https://img.shields.io/npm/v/pq-algorithm-id?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-algorithm-id) | [![crates.io](https://img.shields.io/crates/v/pq-algorithm-id?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-algorithm-id) | — |
-| [`pq-key-encoder`](packages/pq-key-encoder) | Key encoding (DER, PEM, JWK, SPKI, PKCS#8) | [![npm](https://img.shields.io/npm/v/pq-key-encoder?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-key-encoder) | [![crates.io](https://img.shields.io/crates/v/pq-key-encoder?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-key-encoder) | In progress |
+| [`pq-key-encoder`](packages/pq-key-encoder) | Key encoding (DER, PEM, JWK, SPKI, PKCS#8) | [![npm](https://img.shields.io/npm/v/pq-key-encoder?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-key-encoder) | [![crates.io](https://img.shields.io/crates/v/pq-key-encoder?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-key-encoder) | Pending |
 | [`pq-test-vectors`](packages/pq-test-vectors) | NIST test vectors as importable fixtures | [![npm](https://img.shields.io/npm/v/pq-test-vectors?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-test-vectors) | [![crates.io](https://img.shields.io/crates/v/pq-test-vectors?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-test-vectors) | — |
 | [`pq-key-strength`](packages/pq-key-strength) | Classical vs PQ security level comparison | [![npm](https://img.shields.io/npm/v/pq-key-strength?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-key-strength) | [![crates.io](https://img.shields.io/crates/v/pq-key-strength?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-key-strength) | — |
 | [`pq-size-calculator`](packages/pq-size-calculator) | Signature/ciphertext/key size calculator | [![npm](https://img.shields.io/npm/v/pq-size-calculator?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-size-calculator) | [![crates.io](https://img.shields.io/crates/v/pq-size-calculator?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-size-calculator) | — |
