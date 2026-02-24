@@ -5,10 +5,15 @@
 [![CI](https://github.com/multivmlabs/post-quantum-packages/actions/workflows/ci.yml/badge.svg)](https://github.com/multivmlabs/post-quantum-packages/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![MSRV](https://img.shields.io/badge/MSRV-1.78-blue.svg)](https://blog.rust-lang.org/2024/05/02/Rust-1.78.0.html)
+[![Audit](https://img.shields.io/badge/audit-pending-orange)](https://github.com/multivmlabs/post-quantum-packages/blob/main/SECURITY.md)
 
 OID constants and utilities for NIST post-quantum algorithms (ML-KEM, ML-DSA, SLH-DSA).
 
 Zero dependencies. `no_std` compatible.
+
+| | |
+|:---:|:---|
+| :warning: | **This crate has not yet been independently audited.** Security audit is pending. Use in production at your own risk. This notice will be updated with a link to the audit report once complete. See [SECURITY.md](https://github.com/multivmlabs/post-quantum-packages/blob/main/SECURITY.md). |
 
 ## Installation
 
