@@ -138,48 +138,67 @@ Every package is implemented in TypeScript, Rust, and Python with consistent API
 ### TypeScript
 
 ```bash
-npm install pq-jws pq-key-encoder
+npm install pq-oid pq-key-encoder
 ```
 
 ```typescript
-import { sign, verify } from 'pq-jws';
-import { decodePublicKey } from 'pq-key-encoder';
+import { OID, Algorithm } from 'pq-oid';
+import { fromDER, toPEM, type KeyData } from 'pq-key-encoder';
 
-// Sign a JWS with ML-DSA-65
-const jws = sign(payload, privateKey, { alg: 'ML-DSA-65' });
+// Look up algorithm metadata
+const info = Algorithm.get('ML-DSA-65');
+// { name: 'ML-DSA-65', oid: '2.16.840.1.101.3.4.3.18', publicKeySize: 1952, ... }
 
-// Verify
-const result = verify(jws, publicKey);
+// Decode a DER-encoded public key (auto-detects SPKI)
+const key = fromDER(derBytes);
+// { alg: 'ML-DSA-65', type: 'public', bytes: Uint8Array }
+
+// Convert to PEM
+const pem = toPEM(key);
+// -----BEGIN PUBLIC KEY-----
+// MIIHsjALBgkr...
+// -----END PUBLIC KEY-----
 ```
 
 ### Rust
 
 ```toml
 [dependencies]
-pq-jws = "0.1"
+pq-oid = "1.0"
 pq-key-encoder = "1.0"
 ```
 
 ```rust
-use pq_jws::{sign, verify};
-use pq_key_encoder::decode_public_key;
+use pq_oid::{MlDsa, Algorithm};
+use pq_key_encoder::{PublicKey, PrivateKey};
 
-let jws = sign(payload, &private_key, Algorithm::MlDsa65)?;
-let result = verify(&jws, &public_key)?;
+// Algorithm metadata
+let dsa: MlDsa = "ML-DSA-65".parse().unwrap();
+assert_eq!(dsa.oid(), "2.16.840.1.101.3.4.3.18");
+
+// Decode a DER-encoded public key
+let key = PublicKey::from_spki(&der_bytes)?;
+assert_eq!(key.algorithm(), Algorithm::MlDsa(MlDsa::Dsa65));
+
+// Encode to PEM
+let pem = key.to_pem();
 ```
 
 ### Python
 
 ```bash
-pip install pq-jws pq-key-encoder
+pip install pq-oid pq-key-encoder
 ```
 
 ```python
-from pq_jws import sign, verify
-from pq_key_encoder import decode_public_key
+from pq_oid import OID, Algorithm
 
-jws = sign(payload, private_key, alg="ML-DSA-65")
-result = verify(jws, public_key)
+# OID constants
+oid = OID.from_name("ML-DSA-65")  # '2.16.840.1.101.3.4.3.18'
+
+# Algorithm metadata
+info = Algorithm.get("ML-DSA-65")
+# { name: 'ML-DSA-65', public_key_size: 1952, signature_size: 3309, ... }
 ```
 
 ## Supported Algorithms
