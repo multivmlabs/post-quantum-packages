@@ -10,13 +10,12 @@
 
 - [ ] TypeScript
 - [ ] Rust
-- [ ] Python
 
 ## Checklist
 
 - [ ] Tests pass for all modified packages
-- [ ] Linting/formatting passes (`biome check`, `cargo fmt`, `ruff`)
-- [ ] All three language implementations are consistent (or noted as follow-up)
+- [ ] Linting/formatting passes (`biome check`, `cargo fmt`)
+- [ ] Both language implementations are consistent (or noted as follow-up)
 - [ ] Package README updated if public API changed
 - [ ] No unnecessary dependencies added
 

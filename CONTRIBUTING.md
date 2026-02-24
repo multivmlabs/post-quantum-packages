@@ -12,13 +12,12 @@ Thanks for your interest in contributing. This project provides post-quantum cry
 
 ### Prerequisites
 
-You'll need all three toolchains to work across the full monorepo. If you're contributing to a single language, you only need that toolchain.
+You'll need both toolchains to work across the full monorepo. If you're contributing to a single language, you only need that toolchain.
 
 | Language | Runtime | Minimum Version | Tools |
 |----------|---------|-----------------|-------|
 | TypeScript | [Bun](https://bun.sh) | 1.0+ | — |
 | Rust | [rustup](https://rustup.rs) | 1.78+ | `rustfmt`, `clippy` |
-| Python | [Python](https://python.org) | 3.8+ | `pip`, `pytest`, `ruff` |
 
 ### Setup
 
@@ -31,10 +30,6 @@ bun install
 
 # Rust
 cargo build
-
-# Python (per-package)
-cd packages/<package>/python
-pip install -e .
 ```
 
 ### Running Tests
@@ -49,12 +44,11 @@ cargo test
 # Single package (any language)
 cd packages/<package>/ts && bun test
 cd packages/<package>/rust && cargo test
-cd packages/<package>/python && pytest tests -v
 ```
 
 ## Package Structure
 
-Every package follows the same tri-language layout:
+Every package follows the same dual-language layout:
 
 ```
 packages/<package>/
@@ -68,15 +62,10 @@ packages/<package>/
 │   ├── Cargo.toml
 │   ├── src/
 │   └── README.md
-├── python/          # Python implementation
-│   ├── pyproject.toml
-│   ├── src/pq_<package>/
-│   ├── tests/
-│   └── README.md
 └── test-data/       # Shared test vectors (some packages)
 ```
 
-**Cross-language consistency**: All three implementations of a package must expose the same public API and produce identical outputs for the same inputs. Shared test vectors in `test-data/` help enforce this.
+**Cross-language consistency**: Both implementations of a package must expose the same public API and produce identical outputs for the same inputs. Shared test vectors in `test-data/` help enforce this.
 
 ## Coding Standards
 
@@ -109,18 +98,6 @@ cargo test --all-features
 cargo build --no-default-features
 ```
 
-### Python
-
-- **Minimum version**: 3.8
-- **Linter**: [ruff](https://docs.astral.sh/ruff/)
-- **Tests**: pytest
-
-```bash
-cd packages/<package>/python
-ruff check .
-pytest tests -v
-```
-
 ## Implementation Guidelines
 
 This code is used in a **blockchain context** where correctness and efficiency are critical:
@@ -143,8 +120,8 @@ Branch naming: `feat/<package>-<description>`, `fix/<package>-<description>`, or
 
 ### 2. Make Your Changes
 
-- If you're modifying behavior, update all three language implementations to keep them in sync
-- If you're adding a feature to one language, note in the PR that the other languages need corresponding changes
+- If you're modifying behavior, update both language implementations to keep them in sync
+- If you're adding a feature to one language, note in the PR that the other language needs corresponding changes
 - Add or update tests for any behavior changes
 - Update the package README if the public API changes
 
@@ -164,11 +141,6 @@ cd packages/<package>/rust
 cargo fmt -- --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-features
-
-# Python
-cd packages/<package>/python
-ruff check .
-pytest tests -v
 ```
 
 ### 4. Commit
@@ -196,7 +168,7 @@ refactor(pq-spki): reduce allocations in encode path
 PRs are reviewed for:
 
 1. **Correctness** — Does it produce the right output? Are edge cases handled?
-2. **Consistency** — Do all three language implementations agree?
+2. **Consistency** — Do both language implementations agree?
 3. **Performance** — No unnecessary allocations or copies on hot paths
 4. **Standards compliance** — Does it follow the relevant RFCs and NIST specifications?
 5. **Test coverage** — Are there tests for new behavior and edge cases?
@@ -220,7 +192,6 @@ bun run scripts/version <package>/<language> <major|minor|patch>
 Tag patterns trigger the corresponding publish workflow:
 - `*/ts@*` → npm publish
 - `*/rust@*` → cargo publish
-- `*/python@*` → twine upload to PyPI
 
 Only maintainers can publish releases. Contributors do not need to bump versions — this is handled during merge.
 

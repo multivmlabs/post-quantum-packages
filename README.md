@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  Production-grade post-quantum cryptography for TypeScript, Rust, and Python.
+  Production-grade post-quantum cryptography for TypeScript and Rust.
   <br />
   No legacy algorithms. No C bindings. Pure language implementations.
 </p>
@@ -17,7 +17,9 @@
 
 ---
 
-A unified monorepo of **39 packages** implementing NIST-standardized post-quantum cryptography ([FIPS 203](https://csrc.nist.gov/pubs/fips/203/final), [204](https://csrc.nist.gov/pubs/fips/204/final), [205](https://csrc.nist.gov/pubs/fips/205/final)) across three languages. Every package ships to **npm**, **crates.io**, and **PyPI** with identical APIs and shared test vectors.
+A unified monorepo implementing NIST-standardized post-quantum cryptography ([FIPS 203](https://csrc.nist.gov/pubs/fips/203/final), [204](https://csrc.nist.gov/pubs/fips/204/final), [205](https://csrc.nist.gov/pubs/fips/205/final)) packages across two languages. Every package ships to **npm** and **crates.io** with identical APIs and shared test vectors.
+
+> **Python support is planned.** Current priority is TypeScript and Rust. Python implementations will follow once the core APIs stabilize. Track progress in [issues](https://github.com/multivmlabs/post-quantum-packages/issues).
 
 All implementations target NIST security categories I, III, and V. All parameter choices follow the normative requirements of their respective FIPS standards. Rust crates are `no_std` capable where applicable. Packages are designed with PQ payload sizes as a first-class constraint — because in real protocols, bytes-on-wire matter.
 
@@ -34,7 +36,7 @@ Existing options require C/FFI bindings (liboqs, pqcrypto) or only support a sin
 | | post-quantum-packages | liboqs bindings | pqcrypto crate |
 |---|:---:|:---:|:---:|
 | Pure language (no C/FFI) | Yes | No | No |
-| TypeScript + Rust + Python | Yes | Partial | Rust only |
+| TypeScript + Rust | Yes | Partial | Rust only |
 | FIPS 203 / 204 / 205 | Yes | Yes | Partial |
 | `no_std` (Rust) | Yes | No | Partial |
 | Zero native dependencies | Yes | No | No |
@@ -46,92 +48,91 @@ Existing options require C/FFI bindings (liboqs, pqcrypto) or only support a sin
 | Bun | 1.0+ |
 | Node.js | 18+ |
 | Rust | 1.78+ |
-| Python | 3.8+ |
 
 ## Packages
 
-Every package is implemented in TypeScript, Rust, and Python with consistent APIs.
+Every package is implemented in TypeScript and Rust with consistent APIs.
 
-> **Status legend**: Packages follow semantic versioning. All packages listed below are published and tested in CI. See each package's README for detailed API documentation.
+> **Audit status**: Packages under active audit are marked accordingly. Remaining packages are pending audit as implementations mature.
 
 ### Core
 
-| Package | Description | npm | crates.io | PyPI |
-|---------|-------------|-----|-----------|------|
-| [`pq-oid`](packages/pq-oid) | OID constants for ML-KEM, ML-DSA, SLH-DSA | [![npm](https://img.shields.io/npm/v/pq-oid?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-oid) | [![crates.io](https://img.shields.io/crates/v/pq-oid?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-oid) | [![PyPI](https://img.shields.io/pypi/v/pq-oid?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-oid) |
-| [`pq-algorithm-id`](packages/pq-algorithm-id) | Algorithm identifier mappings (JOSE, COSE, X.509) | [![npm](https://img.shields.io/npm/v/pq-algorithm-id?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-algorithm-id) | [![crates.io](https://img.shields.io/crates/v/pq-algorithm-id?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-algorithm-id) | [![PyPI](https://img.shields.io/pypi/v/pq-algorithm-id?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-algorithm-id) |
-| [`pq-key-encoder`](packages/pq-key-encoder) | Key encoding (DER, PEM, JWK, SPKI, PKCS#8) | [![npm](https://img.shields.io/npm/v/pq-key-encoder?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-key-encoder) | [![crates.io](https://img.shields.io/crates/v/pq-key-encoder?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-key-encoder) | [![PyPI](https://img.shields.io/pypi/v/pq-key-encoder?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-key-encoder) |
-| [`pq-test-vectors`](packages/pq-test-vectors) | NIST test vectors as importable fixtures | [![npm](https://img.shields.io/npm/v/pq-test-vectors?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-test-vectors) | [![crates.io](https://img.shields.io/crates/v/pq-test-vectors?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-test-vectors) | [![PyPI](https://img.shields.io/pypi/v/pq-test-vectors?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-test-vectors) |
-| [`pq-key-strength`](packages/pq-key-strength) | Classical vs PQ security level comparison | [![npm](https://img.shields.io/npm/v/pq-key-strength?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-key-strength) | [![crates.io](https://img.shields.io/crates/v/pq-key-strength?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-key-strength) | [![PyPI](https://img.shields.io/pypi/v/pq-key-strength?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-key-strength) |
-| [`pq-size-calculator`](packages/pq-size-calculator) | Signature/ciphertext/key size calculator | [![npm](https://img.shields.io/npm/v/pq-size-calculator?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-size-calculator) | [![crates.io](https://img.shields.io/crates/v/pq-size-calculator?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-size-calculator) | [![PyPI](https://img.shields.io/pypi/v/pq-size-calculator?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-size-calculator) |
-| [`pq-key-fingerprint`](packages/pq-key-fingerprint) | Public key fingerprint generation | [![npm](https://img.shields.io/npm/v/pq-key-fingerprint?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-key-fingerprint) | [![crates.io](https://img.shields.io/crates/v/pq-key-fingerprint?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-key-fingerprint) | [![PyPI](https://img.shields.io/pypi/v/pq-key-fingerprint?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-key-fingerprint) |
-| [`pq-rng`](packages/pq-rng) | Deterministic RNG for testing | [![npm](https://img.shields.io/npm/v/pq-rng?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-rng) | [![crates.io](https://img.shields.io/crates/v/pq-rng?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-rng) | [![PyPI](https://img.shields.io/pypi/v/pq-rng?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-rng) |
-| [`pq-side-channel`](packages/pq-side-channel) | Side-channel resistant helpers | [![npm](https://img.shields.io/npm/v/pq-side-channel?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-side-channel) | [![crates.io](https://img.shields.io/crates/v/pq-side-channel?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-side-channel) | [![PyPI](https://img.shields.io/pypi/v/pq-side-channel?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-side-channel) |
+| Package | Description | npm | crates.io | Audit |
+|---------|-------------|-----|-----------|-------|
+| [`pq-oid`](packages/pq-oid) | OID constants for ML-KEM, ML-DSA, SLH-DSA | [![npm](https://img.shields.io/npm/v/pq-oid?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-oid) | [![crates.io](https://img.shields.io/crates/v/pq-oid?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-oid) | In progress |
+| [`pq-algorithm-id`](packages/pq-algorithm-id) | Algorithm identifier mappings (JOSE, COSE, X.509) | [![npm](https://img.shields.io/npm/v/pq-algorithm-id?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-algorithm-id) | [![crates.io](https://img.shields.io/crates/v/pq-algorithm-id?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-algorithm-id) | — |
+| [`pq-key-encoder`](packages/pq-key-encoder) | Key encoding (DER, PEM, JWK, SPKI, PKCS#8) | [![npm](https://img.shields.io/npm/v/pq-key-encoder?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-key-encoder) | [![crates.io](https://img.shields.io/crates/v/pq-key-encoder?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-key-encoder) | In progress |
+| [`pq-test-vectors`](packages/pq-test-vectors) | NIST test vectors as importable fixtures | [![npm](https://img.shields.io/npm/v/pq-test-vectors?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-test-vectors) | [![crates.io](https://img.shields.io/crates/v/pq-test-vectors?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-test-vectors) | — |
+| [`pq-key-strength`](packages/pq-key-strength) | Classical vs PQ security level comparison | [![npm](https://img.shields.io/npm/v/pq-key-strength?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-key-strength) | [![crates.io](https://img.shields.io/crates/v/pq-key-strength?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-key-strength) | — |
+| [`pq-size-calculator`](packages/pq-size-calculator) | Signature/ciphertext/key size calculator | [![npm](https://img.shields.io/npm/v/pq-size-calculator?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-size-calculator) | [![crates.io](https://img.shields.io/crates/v/pq-size-calculator?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-size-calculator) | — |
+| [`pq-key-fingerprint`](packages/pq-key-fingerprint) | Public key fingerprint generation | [![npm](https://img.shields.io/npm/v/pq-key-fingerprint?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-key-fingerprint) | [![crates.io](https://img.shields.io/crates/v/pq-key-fingerprint?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-key-fingerprint) | — |
+| [`pq-rng`](packages/pq-rng) | Deterministic RNG for testing | [![npm](https://img.shields.io/npm/v/pq-rng?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-rng) | [![crates.io](https://img.shields.io/crates/v/pq-rng?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-rng) | — |
+| [`pq-side-channel`](packages/pq-side-channel) | Side-channel resistant helpers | [![npm](https://img.shields.io/npm/v/pq-side-channel?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-side-channel) | [![crates.io](https://img.shields.io/crates/v/pq-side-channel?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-side-channel) | — |
 
 ### Key Encoding & Certificates
 
-| Package | Description | npm | crates.io | PyPI |
-|---------|-------------|-----|-----------|------|
-| [`pq-spki`](packages/pq-spki) | SubjectPublicKeyInfo encoding | [![npm](https://img.shields.io/npm/v/pq-spki?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-spki) | [![crates.io](https://img.shields.io/crates/v/pq-spki?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-spki) | [![PyPI](https://img.shields.io/pypi/v/pq-spki?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-spki) |
-| [`pq-pkcs8`](packages/pq-pkcs8) | PKCS#8 private key encoding | [![npm](https://img.shields.io/npm/v/pq-pkcs8?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-pkcs8) | [![crates.io](https://img.shields.io/crates/v/pq-pkcs8?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-pkcs8) | [![PyPI](https://img.shields.io/pypi/v/pq-pkcs8?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-pkcs8) |
-| [`pq-csr`](packages/pq-csr) | Certificate Signing Requests | [![npm](https://img.shields.io/npm/v/pq-csr?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-csr) | [![crates.io](https://img.shields.io/crates/v/pq-csr?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-csr) | [![PyPI](https://img.shields.io/pypi/v/pq-csr?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-csr) |
-| [`pq-cert-parse`](packages/pq-cert-parse) | X.509 certificate parsing (read-only) | [![npm](https://img.shields.io/npm/v/pq-cert-parse?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-cert-parse) | [![crates.io](https://img.shields.io/crates/v/pq-cert-parse?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-cert-parse) | [![PyPI](https://img.shields.io/pypi/v/pq-cert-parse?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-cert-parse) |
-| [`pq-cert-verify`](packages/pq-cert-verify) | X.509 certificate chain verification | [![npm](https://img.shields.io/npm/v/pq-cert-verify?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-cert-verify) | [![crates.io](https://img.shields.io/crates/v/pq-cert-verify?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-cert-verify) | [![PyPI](https://img.shields.io/pypi/v/pq-cert-verify?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-cert-verify) |
+| Package | Description | npm | crates.io | Audit |
+|---------|-------------|-----|-----------|-------|
+| [`pq-spki`](packages/pq-spki) | SubjectPublicKeyInfo encoding | [![npm](https://img.shields.io/npm/v/pq-spki?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-spki) | [![crates.io](https://img.shields.io/crates/v/pq-spki?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-spki) | — |
+| [`pq-pkcs8`](packages/pq-pkcs8) | PKCS#8 private key encoding | [![npm](https://img.shields.io/npm/v/pq-pkcs8?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-pkcs8) | [![crates.io](https://img.shields.io/crates/v/pq-pkcs8?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-pkcs8) | — |
+| [`pq-csr`](packages/pq-csr) | Certificate Signing Requests | [![npm](https://img.shields.io/npm/v/pq-csr?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-csr) | [![crates.io](https://img.shields.io/crates/v/pq-csr?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-csr) | — |
+| [`pq-cert-parse`](packages/pq-cert-parse) | X.509 certificate parsing (read-only) | [![npm](https://img.shields.io/npm/v/pq-cert-parse?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-cert-parse) | [![crates.io](https://img.shields.io/crates/v/pq-cert-parse?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-cert-parse) | — |
+| [`pq-cert-verify`](packages/pq-cert-verify) | X.509 certificate chain verification | [![npm](https://img.shields.io/npm/v/pq-cert-verify?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-cert-verify) | [![crates.io](https://img.shields.io/crates/v/pq-cert-verify?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-cert-verify) | — |
 
 ### Web Standards (JOSE / COSE / CMS)
 
-| Package | Description | npm | crates.io | PyPI |
-|---------|-------------|-----|-----------|------|
-| [`pq-jws`](packages/pq-jws) | JSON Web Signature with ML-DSA | [![npm](https://img.shields.io/npm/v/pq-jws?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-jws) | [![crates.io](https://img.shields.io/crates/v/pq-jws?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-jws) | [![PyPI](https://img.shields.io/pypi/v/pq-jws?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-jws) |
-| [`pq-jwe`](packages/pq-jwe) | JSON Web Encryption with ML-KEM | [![npm](https://img.shields.io/npm/v/pq-jwe?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-jwe) | [![crates.io](https://img.shields.io/crates/v/pq-jwe?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-jwe) | [![PyPI](https://img.shields.io/pypi/v/pq-jwe?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-jwe) |
-| [`pq-jwk`](packages/pq-jwk) | JSON Web Key serialization | [![npm](https://img.shields.io/npm/v/pq-jwk?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-jwk) | [![crates.io](https://img.shields.io/crates/v/pq-jwk?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-jwk) | [![PyPI](https://img.shields.io/pypi/v/pq-jwk?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-jwk) |
-| [`pq-jwt-verify`](packages/pq-jwt-verify) | Verify-only JWT (smaller bundle) | [![npm](https://img.shields.io/npm/v/pq-jwt-verify?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-jwt-verify) | [![crates.io](https://img.shields.io/crates/v/pq-jwt-verify?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-jwt-verify) | [![PyPI](https://img.shields.io/pypi/v/pq-jwt-verify?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-jwt-verify) |
-| [`pq-cose`](packages/pq-cose) | CBOR Object Signing and Encryption | [![npm](https://img.shields.io/npm/v/pq-cose?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-cose) | [![crates.io](https://img.shields.io/crates/v/pq-cose?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-cose) | [![PyPI](https://img.shields.io/pypi/v/pq-cose?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-cose) |
-| [`pq-cms`](packages/pq-cms) | Cryptographic Message Syntax | [![npm](https://img.shields.io/npm/v/pq-cms?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-cms) | [![crates.io](https://img.shields.io/crates/v/pq-cms?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-cms) | [![PyPI](https://img.shields.io/pypi/v/pq-cms?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-cms) |
-| [`pq-pkcs7`](packages/pq-pkcs7) | PKCS#7 signatures | [![npm](https://img.shields.io/npm/v/pq-pkcs7?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-pkcs7) | [![crates.io](https://img.shields.io/crates/v/pq-pkcs7?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-pkcs7) | [![PyPI](https://img.shields.io/pypi/v/pq-pkcs7?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-pkcs7) |
-| [`pq-xmldsig`](packages/pq-xmldsig) | XML Digital Signatures with ML-DSA | [![npm](https://img.shields.io/npm/v/pq-xmldsig?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-xmldsig) | [![crates.io](https://img.shields.io/crates/v/pq-xmldsig?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-xmldsig) | [![PyPI](https://img.shields.io/pypi/v/pq-xmldsig?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-xmldsig) |
-| [`pq-dkim`](packages/pq-dkim) | DKIM email signing | [![npm](https://img.shields.io/npm/v/pq-dkim?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-dkim) | [![crates.io](https://img.shields.io/crates/v/pq-dkim?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-dkim) | [![PyPI](https://img.shields.io/pypi/v/pq-dkim?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-dkim) |
+| Package | Description | npm | crates.io | Audit |
+|---------|-------------|-----|-----------|-------|
+| [`pq-jws`](packages/pq-jws) | JSON Web Signature with ML-DSA | [![npm](https://img.shields.io/npm/v/pq-jws?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-jws) | [![crates.io](https://img.shields.io/crates/v/pq-jws?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-jws) | — |
+| [`pq-jwe`](packages/pq-jwe) | JSON Web Encryption with ML-KEM | [![npm](https://img.shields.io/npm/v/pq-jwe?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-jwe) | [![crates.io](https://img.shields.io/crates/v/pq-jwe?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-jwe) | — |
+| [`pq-jwk`](packages/pq-jwk) | JSON Web Key serialization | [![npm](https://img.shields.io/npm/v/pq-jwk?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-jwk) | [![crates.io](https://img.shields.io/crates/v/pq-jwk?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-jwk) | — |
+| [`pq-jwt-verify`](packages/pq-jwt-verify) | Verify-only JWT (smaller bundle) | [![npm](https://img.shields.io/npm/v/pq-jwt-verify?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-jwt-verify) | [![crates.io](https://img.shields.io/crates/v/pq-jwt-verify?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-jwt-verify) | — |
+| [`pq-cose`](packages/pq-cose) | CBOR Object Signing and Encryption | [![npm](https://img.shields.io/npm/v/pq-cose?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-cose) | [![crates.io](https://img.shields.io/crates/v/pq-cose?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-cose) | — |
+| [`pq-cms`](packages/pq-cms) | Cryptographic Message Syntax | [![npm](https://img.shields.io/npm/v/pq-cms?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-cms) | [![crates.io](https://img.shields.io/crates/v/pq-cms?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-cms) | — |
+| [`pq-pkcs7`](packages/pq-pkcs7) | PKCS#7 signatures | [![npm](https://img.shields.io/npm/v/pq-pkcs7?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-pkcs7) | [![crates.io](https://img.shields.io/crates/v/pq-pkcs7?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-pkcs7) | — |
+| [`pq-xmldsig`](packages/pq-xmldsig) | XML Digital Signatures with ML-DSA | [![npm](https://img.shields.io/npm/v/pq-xmldsig?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-xmldsig) | [![crates.io](https://img.shields.io/crates/v/pq-xmldsig?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-xmldsig) | — |
+| [`pq-dkim`](packages/pq-dkim) | DKIM email signing | [![npm](https://img.shields.io/npm/v/pq-dkim?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-dkim) | [![crates.io](https://img.shields.io/crates/v/pq-dkim?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-dkim) | — |
 
 ### Encryption & Key Exchange
 
-| Package | Description | npm | crates.io | PyPI |
-|---------|-------------|-----|-----------|------|
-| [`pq-ecies`](packages/pq-ecies) | ECIES-style encryption with ML-KEM | [![npm](https://img.shields.io/npm/v/pq-ecies?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-ecies) | [![crates.io](https://img.shields.io/crates/v/pq-ecies?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-ecies) | [![PyPI](https://img.shields.io/pypi/v/pq-ecies?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-ecies) |
-| [`pq-hpke`](packages/pq-hpke) | Hybrid Public Key Encryption | [![npm](https://img.shields.io/npm/v/pq-hpke?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-hpke) | [![crates.io](https://img.shields.io/crates/v/pq-hpke?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-hpke) | [![PyPI](https://img.shields.io/pypi/v/pq-hpke?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-hpke) |
-| [`pq-kem-combiner`](packages/pq-kem-combiner) | Secure multi-KEM combiner | [![npm](https://img.shields.io/npm/v/pq-kem-combiner?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-kem-combiner) | [![crates.io](https://img.shields.io/crates/v/pq-kem-combiner?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-kem-combiner) | [![PyPI](https://img.shields.io/pypi/v/pq-kem-combiner?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-kem-combiner) |
-| [`pq-noise`](packages/pq-noise) | Noise protocol patterns with PQ | [![npm](https://img.shields.io/npm/v/pq-noise?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-noise) | [![crates.io](https://img.shields.io/crates/v/pq-noise?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-noise) | [![PyPI](https://img.shields.io/pypi/v/pq-noise?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-noise) |
+| Package | Description | npm | crates.io | Audit |
+|---------|-------------|-----|-----------|-------|
+| [`pq-ecies`](packages/pq-ecies) | ECIES-style encryption with ML-KEM | [![npm](https://img.shields.io/npm/v/pq-ecies?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-ecies) | [![crates.io](https://img.shields.io/crates/v/pq-ecies?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-ecies) | — |
+| [`pq-hpke`](packages/pq-hpke) | Hybrid Public Key Encryption | [![npm](https://img.shields.io/npm/v/pq-hpke?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-hpke) | [![crates.io](https://img.shields.io/crates/v/pq-hpke?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-hpke) | — |
+| [`pq-kem-combiner`](packages/pq-kem-combiner) | Secure multi-KEM combiner | [![npm](https://img.shields.io/npm/v/pq-kem-combiner?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-kem-combiner) | [![crates.io](https://img.shields.io/crates/v/pq-kem-combiner?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-kem-combiner) | — |
+| [`pq-noise`](packages/pq-noise) | Noise protocol patterns with PQ | [![npm](https://img.shields.io/npm/v/pq-noise?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-noise) | [![crates.io](https://img.shields.io/crates/v/pq-noise?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-noise) | — |
 
 ### Authentication
 
-| Package | Description | npm | crates.io | PyPI |
-|---------|-------------|-----|-----------|------|
-| [`pq-fido2`](packages/pq-fido2) | FIDO2/CTAP2 with PQ | [![npm](https://img.shields.io/npm/v/pq-fido2?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-fido2) | [![crates.io](https://img.shields.io/crates/v/pq-fido2?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-fido2) | [![PyPI](https://img.shields.io/pypi/v/pq-fido2?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-fido2) |
-| [`pq-webauthn`](packages/pq-webauthn) | Server-side WebAuthn with ML-DSA | [![npm](https://img.shields.io/npm/v/pq-webauthn?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-webauthn) | [![crates.io](https://img.shields.io/crates/v/pq-webauthn?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-webauthn) | [![PyPI](https://img.shields.io/pypi/v/pq-webauthn?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-webauthn) |
-| [`pq-ssh-agent`](packages/pq-ssh-agent) | SSH agent protocol with PQ keys | [![npm](https://img.shields.io/npm/v/pq-ssh-agent?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-ssh-agent) | [![crates.io](https://img.shields.io/crates/v/pq-ssh-agent?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-ssh-agent) | [![PyPI](https://img.shields.io/pypi/v/pq-ssh-agent?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-ssh-agent) |
-| [`pq-kerberos`](packages/pq-kerberos) | Kerberos ticket handling with PQ | [![npm](https://img.shields.io/npm/v/pq-kerberos?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-kerberos) | [![crates.io](https://img.shields.io/crates/v/pq-kerberos?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-kerberos) | [![PyPI](https://img.shields.io/pypi/v/pq-kerberos?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-kerberos) |
+| Package | Description | npm | crates.io | Audit |
+|---------|-------------|-----|-----------|-------|
+| [`pq-fido2`](packages/pq-fido2) | FIDO2/CTAP2 with PQ | [![npm](https://img.shields.io/npm/v/pq-fido2?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-fido2) | [![crates.io](https://img.shields.io/crates/v/pq-fido2?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-fido2) | — |
+| [`pq-webauthn`](packages/pq-webauthn) | Server-side WebAuthn with ML-DSA | [![npm](https://img.shields.io/npm/v/pq-webauthn?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-webauthn) | [![crates.io](https://img.shields.io/crates/v/pq-webauthn?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-webauthn) | — |
+| [`pq-ssh-agent`](packages/pq-ssh-agent) | SSH agent protocol with PQ keys | [![npm](https://img.shields.io/npm/v/pq-ssh-agent?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-ssh-agent) | [![crates.io](https://img.shields.io/crates/v/pq-ssh-agent?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-ssh-agent) | — |
+| [`pq-kerberos`](packages/pq-kerberos) | Kerberos ticket handling with PQ | [![npm](https://img.shields.io/npm/v/pq-kerberos?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-kerberos) | [![crates.io](https://img.shields.io/crates/v/pq-kerberos?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-kerberos) | — |
 
 ### Network Protocols
 
-| Package | Description | npm | crates.io | PyPI |
-|---------|-------------|-----|-----------|------|
-| [`pq-tls-client`](packages/pq-tls-client) | TLS 1.3 client with PQ key exchange | [![npm](https://img.shields.io/npm/v/pq-tls-client?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-tls-client) | [![crates.io](https://img.shields.io/crates/v/pq-tls-client?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-tls-client) | [![PyPI](https://img.shields.io/pypi/v/pq-tls-client?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-tls-client) |
-| [`pq-dtls`](packages/pq-dtls) | DTLS with PQ for UDP | [![npm](https://img.shields.io/npm/v/pq-dtls?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-dtls) | [![crates.io](https://img.shields.io/crates/v/pq-dtls?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-dtls) | [![PyPI](https://img.shields.io/pypi/v/pq-dtls?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-dtls) |
-| [`pq-quic-crypto`](packages/pq-quic-crypto) | QUIC crypto layer with PQ | [![npm](https://img.shields.io/npm/v/pq-quic-crypto?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-quic-crypto) | [![crates.io](https://img.shields.io/crates/v/pq-quic-crypto?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-quic-crypto) | [![PyPI](https://img.shields.io/pypi/v/pq-quic-crypto?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-quic-crypto) |
+| Package | Description | npm | crates.io | Audit |
+|---------|-------------|-----|-----------|-------|
+| [`pq-tls-client`](packages/pq-tls-client) | TLS 1.3 client with PQ key exchange | [![npm](https://img.shields.io/npm/v/pq-tls-client?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-tls-client) | [![crates.io](https://img.shields.io/crates/v/pq-tls-client?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-tls-client) | — |
+| [`pq-dtls`](packages/pq-dtls) | DTLS with PQ for UDP | [![npm](https://img.shields.io/npm/v/pq-dtls?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-dtls) | [![crates.io](https://img.shields.io/crates/v/pq-dtls?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-dtls) | — |
+| [`pq-quic-crypto`](packages/pq-quic-crypto) | QUIC crypto layer with PQ | [![npm](https://img.shields.io/npm/v/pq-quic-crypto?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-quic-crypto) | [![crates.io](https://img.shields.io/crates/v/pq-quic-crypto?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-quic-crypto) | — |
 
 ### Blockchain
 
-| Package | Description | npm | crates.io | PyPI |
-|---------|-------------|-----|-----------|------|
-| [`pq-eth-signer`](packages/pq-eth-signer) | Ethereum transaction signing with PQ | [![npm](https://img.shields.io/npm/v/pq-eth-signer?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-eth-signer) | [![crates.io](https://img.shields.io/crates/v/pq-eth-signer?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-eth-signer) | [![PyPI](https://img.shields.io/pypi/v/pq-eth-signer?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-eth-signer) |
-| [`pq-solana-signer`](packages/pq-solana-signer) | Solana transaction signing with PQ | [![npm](https://img.shields.io/npm/v/pq-solana-signer?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-solana-signer) | [![crates.io](https://img.shields.io/crates/v/pq-solana-signer?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-solana-signer) | [![PyPI](https://img.shields.io/pypi/v/pq-solana-signer?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-solana-signer) |
-| [`pq-bitcoin-taproot`](packages/pq-bitcoin-taproot) | Taproot-compatible PQ signatures | [![npm](https://img.shields.io/npm/v/pq-bitcoin-taproot?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-bitcoin-taproot) | [![crates.io](https://img.shields.io/crates/v/pq-bitcoin-taproot?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-bitcoin-taproot) | [![PyPI](https://img.shields.io/pypi/v/pq-bitcoin-taproot?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-bitcoin-taproot) |
+| Package | Description | npm | crates.io | Audit |
+|---------|-------------|-----|-----------|-------|
+| [`pq-eth-signer`](packages/pq-eth-signer) | Ethereum transaction signing with PQ | [![npm](https://img.shields.io/npm/v/pq-eth-signer?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-eth-signer) | [![crates.io](https://img.shields.io/crates/v/pq-eth-signer?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-eth-signer) | — |
+| [`pq-solana-signer`](packages/pq-solana-signer) | Solana transaction signing with PQ | [![npm](https://img.shields.io/npm/v/pq-solana-signer?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-solana-signer) | [![crates.io](https://img.shields.io/crates/v/pq-solana-signer?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-solana-signer) | — |
+| [`pq-bitcoin-taproot`](packages/pq-bitcoin-taproot) | Taproot-compatible PQ signatures | [![npm](https://img.shields.io/npm/v/pq-bitcoin-taproot?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-bitcoin-taproot) | [![crates.io](https://img.shields.io/crates/v/pq-bitcoin-taproot?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-bitcoin-taproot) | — |
 
 ### Browser & Runtime
 
-| Package | Description | npm | crates.io | PyPI |
-|---------|-------------|-----|-----------|------|
-| [`pq-wasm`](packages/pq-wasm) | Browser-ready WASM build | [![npm](https://img.shields.io/npm/v/pq-wasm?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-wasm) | [![crates.io](https://img.shields.io/crates/v/pq-wasm?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-wasm) | [![PyPI](https://img.shields.io/pypi/v/pq-wasm?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-wasm) |
-| [`pq-worker`](packages/pq-worker) | Web Worker wrapper for non-blocking PQ | [![npm](https://img.shields.io/npm/v/pq-worker?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-worker) | [![crates.io](https://img.shields.io/crates/v/pq-worker?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-worker) | [![PyPI](https://img.shields.io/pypi/v/pq-worker?label=&style=flat&colorA=000000&colorB=000000)](https://pypi.org/project/pq-worker) |
+| Package | Description | npm | crates.io | Audit |
+|---------|-------------|-----|-----------|-------|
+| [`pq-wasm`](packages/pq-wasm) | Browser-ready WASM build | [![npm](https://img.shields.io/npm/v/pq-wasm?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-wasm) | [![crates.io](https://img.shields.io/crates/v/pq-wasm?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-wasm) | — |
+| [`pq-worker`](packages/pq-worker) | Web Worker wrapper for non-blocking PQ | [![npm](https://img.shields.io/npm/v/pq-worker?label=&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/pq-worker) | [![crates.io](https://img.shields.io/crates/v/pq-worker?label=&style=flat&colorA=000000&colorB=000000)](https://crates.io/crates/pq-worker) | — |
 
 ## Quick Start
 
@@ -184,23 +185,6 @@ assert_eq!(key.algorithm(), Algorithm::MlDsa(MlDsa::Dsa65));
 let pem = key.to_pem();
 ```
 
-### Python
-
-```bash
-pip install pq-oid pq-key-encoder
-```
-
-```python
-from pq_oid import OID, Algorithm
-
-# OID constants
-oid = OID.from_name("ML-DSA-65")  # '2.16.840.1.101.3.4.3.18'
-
-# Algorithm metadata
-info = Algorithm.get("ML-DSA-65")
-# { name: 'ML-DSA-65', public_key_size: 1952, signature_size: 3309, ... }
-```
-
 ## Supported Algorithms
 
 All packages implement the NIST post-quantum standards:
@@ -229,13 +213,11 @@ packages/
 ├── pq-oid/
 │   ├── ts/          # TypeScript → npm
 │   ├── rust/        # Rust → crates.io
-│   ├── python/      # Python → PyPI
 │   └── test-data/   # Shared test vectors
 ├── pq-key-encoder/
 │   ├── ts/
-│   ├── rust/
-│   └── python/
-└── ...              # 39 packages, same structure
+│   └── rust/
+└── ...              # same structure for all packages
 ```
 
 Each language implementation has its own README with detailed API docs, installation instructions, and usage examples.
@@ -246,7 +228,6 @@ Each language implementation has its own README with detailed API docs, installa
 
 - [Bun](https://bun.sh) 1.0+ (TypeScript)
 - [Rust](https://rustup.rs) 1.78+ with `rustfmt` and `clippy`
-- [Python](https://python.org) 3.8+ with `pip`, `pytest`, `ruff`
 
 ### Build & Test
 
@@ -256,10 +237,6 @@ bun install && npm test
 
 # Rust — all packages
 cargo test
-
-# Python — single package
-cd packages/pq-oid/python
-pip install -e . && pytest tests -v
 ```
 
 CI runs smart change detection — only affected packages are tested on each push.
@@ -288,7 +265,7 @@ If you use these packages in academic work, please cite:
 
 ```bibtex
 @software{pq_packages,
-  title  = {post-quantum-packages: Production PQC for TypeScript, Rust, and Python},
+  title  = {post-quantum-packages: Production PQC for TypeScript and Rust},
   author = {{MultiVM Labs}},
   url    = {https://github.com/multivmlabs/post-quantum-packages},
   year   = {2025}

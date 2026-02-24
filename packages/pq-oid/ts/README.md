@@ -3,10 +3,15 @@
 [![npm](https://img.shields.io/npm/v/pq-oid)](https://www.npmjs.com/package/pq-oid)
 [![CI](https://github.com/multivmlabs/post-quantum-packages/actions/workflows/ci.yml/badge.svg)](https://github.com/multivmlabs/post-quantum-packages/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Audit](https://img.shields.io/badge/audit-in_progress-orange)](https://github.com/multivmlabs/post-quantum-packages/blob/main/SECURITY.md)
 
 OID constants and utilities for NIST post-quantum algorithms (ML-KEM, ML-DSA, SLH-DSA).
 
 Zero dependencies. Works in Node.js, Bun, Deno, and browsers.
+
+| | |
+|:---:|:---|
+| :warning: | **This package has not yet been independently audited.** Security audit is in progress. Use in production at your own risk. This notice will be updated with a link to the audit report once complete. See [SECURITY.md](https://github.com/multivmlabs/post-quantum-packages/blob/main/SECURITY.md). |
 
 ## Installation
 

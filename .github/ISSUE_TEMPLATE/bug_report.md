@@ -10,7 +10,7 @@ assignees: ''
 
 Which package(s) are affected? (e.g., `pq-oid`, `pq-key-encoder`)
 
-**Language**: TypeScript / Rust / Python
+**Language**: TypeScript / Rust
 
 **Version**:
 
@@ -31,5 +31,5 @@ What should have happened?
 ## Environment
 
 - OS:
-- Runtime version (Bun/Node/Rust/Python):
+- Runtime version (Bun/Node/Rust):
 - Package version:

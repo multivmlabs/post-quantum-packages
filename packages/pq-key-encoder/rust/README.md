@@ -5,10 +5,15 @@
 [![CI](https://github.com/multivmlabs/post-quantum-packages/actions/workflows/ci.yml/badge.svg)](https://github.com/multivmlabs/post-quantum-packages/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![MSRV](https://img.shields.io/badge/MSRV-1.78-blue.svg)](https://blog.rust-lang.org/2024/05/02/Rust-1.78.0.html)
+[![Audit](https://img.shields.io/badge/audit-in_progress-orange)](https://github.com/multivmlabs/post-quantum-packages/blob/main/SECURITY.md)
 
 Zero-dependency\* post-quantum key encoding library for Rust. Encodes and decodes **ML-KEM**, **ML-DSA**, and **SLH-DSA** keys across DER (SPKI/PKCS#8), PEM, and JWK formats.
 
 \*Only depends on [`pq-oid`](https://crates.io/crates/pq-oid) and [`zeroize`](https://crates.io/crates/zeroize).
+
+| | |
+|:---:|:---|
+| :warning: | **This crate has not yet been independently audited.** Security audit is in progress. Use in production at your own risk. This notice will be updated with a link to the audit report once complete. See [SECURITY.md](https://github.com/multivmlabs/post-quantum-packages/blob/main/SECURITY.md). |
 
 ## Supported Algorithms
 
