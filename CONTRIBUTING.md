@@ -48,7 +48,7 @@ cd packages/<package>/rust && cargo test
 
 ## Package Structure
 
-Every package follows the same dual-language layout:
+Every package follows the same tri-language layout:
 
 ```
 packages/<package>/
@@ -62,10 +62,13 @@ packages/<package>/
 │   ├── Cargo.toml
 │   ├── src/
 │   └── README.md
-└── test-data/       # Shared test vectors (some packages)
+└── python/          # Python implementation (planned — contributions welcome)
+    ├── pyproject.toml
+    ├── src/
+    └── tests/
 ```
 
-**Cross-language consistency**: Both implementations of a package must expose the same public API and produce identical outputs for the same inputs. Shared test vectors in `test-data/` help enforce this.
+**Cross-language consistency**: All implementations of a package must expose the same public API and produce identical outputs for the same inputs. Current priority is TypeScript and Rust — Python infrastructure is in place but most packages are not yet implemented.
 
 ## Coding Standards
 
@@ -192,6 +195,7 @@ bun run scripts/version <package>/<language> <major|minor|patch>
 Tag patterns trigger the corresponding publish workflow:
 - `*/ts@*` → npm publish
 - `*/rust@*` → cargo publish
+- `*/python@*` → PyPI publish
 
 Only maintainers can publish releases. Contributors do not need to bump versions — this is handled during merge.
 

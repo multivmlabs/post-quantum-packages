@@ -5,7 +5,7 @@
 <p align="center">
   Production-grade post-quantum cryptography for TypeScript and Rust.
   <br />
-  No legacy algorithms. No C bindings. Pure language implementations.
+  No legacy algorithms. NIST-standardized. Production-ready.
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@
 
 A unified monorepo implementing NIST-standardized post-quantum cryptography ([FIPS 203](https://csrc.nist.gov/pubs/fips/203/final), [204](https://csrc.nist.gov/pubs/fips/204/final), [205](https://csrc.nist.gov/pubs/fips/205/final)) packages across two languages. Every package ships to **npm** and **crates.io** with identical APIs and shared test vectors.
 
-> **Python support is planned.** Current priority is TypeScript and Rust. Python implementations will follow once the core APIs stabilize. Track progress in [issues](https://github.com/multivmlabs/post-quantum-packages/issues).
+> **Python support is planned.** Current priority is TypeScript and Rust. Python implementations will follow once the core APIs stabilize. The package structure, CI pipeline, and publish workflows for Python are already in place — contributions are welcome. Track progress in [issues](https://github.com/multivmlabs/post-quantum-packages/issues).
 
 All implementations target NIST security categories I, III, and V. All parameter choices follow the normative requirements of their respective FIPS standards. Rust crates are `no_std` capable where applicable. Packages are designed with PQ payload sizes as a first-class constraint — because in real protocols, bytes-on-wire matter.
 
@@ -31,15 +31,16 @@ Most blockchains and web infrastructure rely on classical signatures (ECDSA, EdD
 
 But adopting PQC means touching every layer of your stack: key encoding, signatures, certificates, JWTs, TLS, SSH, wallet tooling, blockchain transactions. PQ signatures are also significantly larger than classical ones (2.4 KB for ML-DSA-44 vs 64 bytes for Ed25519), which cascades into bandwidth, storage, and consensus scaling — what we call the **PQ scaling cliff**.
 
-Existing options require C/FFI bindings (liboqs, pqcrypto) or only support a single language. This repository provides pure-language implementations across all three ecosystems with zero native dependencies. Every package is built with PQ payload sizes treated as a first-class design constraint.
+Existing options only support a single language or lack the higher-level tooling (key encoding, JWK, certificates, JWS) needed for real applications. This repository provides that tooling across both TypeScript and Rust with consistent APIs. Every package is built with PQ payload sizes treated as a first-class design constraint.
 
 | | post-quantum-packages | liboqs bindings | pqcrypto crate |
 |---|:---:|:---:|:---:|
-| Pure language (no C/FFI) | Yes | No | No |
+| TypeScript + Rust tooling | Yes | No | No |
 | TypeScript + Rust | Yes | Partial | Rust only |
-| FIPS 203 / 204 / 205 | Yes | Yes | Partial |
+| FIPS 203 / 204 / 205 | Yes (target) | Yes | Partial |
 | `no_std` (Rust) | Yes | No | Partial |
-| Zero native dependencies | Yes | No | No |
+
+> Individual package readiness varies — see the [version guide](#packages) below. Packages at `v0.0.1` are scaffolded and open for contribution.
 
 ## Minimum Supported Versions
 
@@ -138,6 +139,8 @@ Every package is implemented in TypeScript and Rust with consistent APIs.
 
 ## Quick Start
 
+> The examples below use `pq-oid` and `pq-key-encoder`, which are among the first implemented packages. Check each package's version before installing — `v0.0.1` means scaffolded only.
+
 ### TypeScript
 
 ```bash
@@ -215,10 +218,11 @@ packages/
 ├── pq-oid/
 │   ├── ts/          # TypeScript → npm
 │   ├── rust/        # Rust → crates.io
-│   └── test-data/   # Shared test vectors
+│   └── python/      # Python → PyPI (planned)
 ├── pq-key-encoder/
 │   ├── ts/
-│   └── rust/
+│   ├── rust/
+│   └── python/
 └── ...              # same structure for all packages
 ```
 
@@ -261,6 +265,8 @@ For vulnerabilities, see [SECURITY.md](SECURITY.md). Do **not** open public issu
 
 - [**Quantum**](https://quantum.systems) — EVM-compatible Layer 1 blockchain where PQ authorization is the default. Uses these packages for PQ transaction signing, key encoding, verifier contract tooling, and the PQ Wallet Layer that brings PQ-secured smart wallets to existing EVM chains. See the [Quantum Litepaper](https://quantum.systems/litepaper) for the full protocol design.
 
+> Using these packages? [Open a PR](https://github.com/multivmlabs/post-quantum-packages/edit/main/README.md) to add your project here.
+
 ## Citation
 
 If you use these packages in academic work, please cite:
@@ -270,7 +276,7 @@ If you use these packages in academic work, please cite:
   title  = {post-quantum-packages: Production PQC for TypeScript and Rust},
   author = {{MultiVM Labs}},
   url    = {https://github.com/multivmlabs/post-quantum-packages},
-  year   = {2025}
+  year   = {2026}
 }
 ```
 

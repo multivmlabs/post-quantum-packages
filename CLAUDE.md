@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Post-quantum cryptography packages monorepo providing a unified toolkit across three languages: TypeScript (npm), Rust (crates.io), and Python (PyPI). Contains 37 packages organized by cryptographic functionality (OIDs, JWS, CSR, key encoding, etc.).
+Post-quantum cryptography packages monorepo providing a unified toolkit across three languages: TypeScript (npm), Rust (crates.io), and Python (PyPI). Contains 39 packages organized by cryptographic functionality (OIDs, JWS, CSR, key encoding, etc.).
 
 ## Common Commands
 
