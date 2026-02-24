@@ -53,6 +53,8 @@ Existing options require C/FFI bindings (liboqs, pqcrypto) or only support a sin
 
 Every package is implemented in TypeScript and Rust with consistent APIs.
 
+> **Version guide**: Packages at `v0.0.1` are scaffolded but not yet implemented. Versions `≥ 1.0.0` are production-ready.
+>
 > **Audit status**: Packages under active audit are marked accordingly. Remaining packages are pending audit as implementations mature.
 
 ### Core
