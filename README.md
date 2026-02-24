@@ -276,7 +276,7 @@ If you use these packages in academic work, please cite:
   title  = {post-quantum-packages: Production PQC for TypeScript and Rust},
   author = {{MultiVM Labs}},
   url    = {https://github.com/multivmlabs/post-quantum-packages},
-  year   = {2025-2026}
+  year   = {2026}
 }
 ```
 
