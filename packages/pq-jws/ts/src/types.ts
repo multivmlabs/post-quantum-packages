@@ -50,3 +50,16 @@ export interface SignJwsCompactInput {
   payload: Uint8Array | string;
   signer: JwsSigner;
 }
+
+export interface JwsCompactParseOptions {
+  maxCompactLength: number;
+  maxHeaderLength: number;
+  maxPayloadLength: number;
+  maxSignatureLength: number;
+}
+
+export type JwsCompactParseOptionsInput = Partial<JwsCompactParseOptions>;
+
+export interface VerifyJwsCompactOptions {
+  parseOptions?: JwsCompactParseOptionsInput;
+}

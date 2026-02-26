@@ -1,12 +1,35 @@
+import { parseJwsCompact } from './compact';
 import { JwsError } from './errors';
-import type { JwsVerifier, ParsedCompactJws, SignJwsCompactInput } from './types';
+import { JwsValidationError } from './errors';
+import type {
+  JwsVerifier,
+  ParsedCompactJws,
+  SignJwsCompactInput,
+  VerifyJwsCompactOptions,
+} from './types';
 
 export async function signJwsCompact(_input: SignJwsCompactInput): Promise<string> {
   throw new JwsError('signJwsCompact is not implemented yet.');
 }
 
-export async function verifyJwsCompact(_compact: string, _verifier: JwsVerifier): Promise<boolean> {
-  throw new JwsError('verifyJwsCompact is not implemented yet.');
+export async function verifyJwsCompact(
+  compact: string,
+  verifier: JwsVerifier,
+  options: VerifyJwsCompactOptions = {},
+): Promise<boolean> {
+  const parsed = parseJwsCompact(compact, options.parseOptions);
+  const verificationResult = await verifier(parsed.signingInput, parsed.signature, {
+    protectedHeader: parsed.protectedHeader,
+    payload: parsed.payload,
+    encodedProtectedHeader: parsed.encodedProtectedHeader,
+    encodedPayload: parsed.encodedPayload,
+  });
+
+  if (typeof verificationResult !== 'boolean') {
+    throw new JwsValidationError('Verifier callback must resolve to a boolean value.');
+  }
+
+  return verificationResult;
 }
 
 export function decodePayloadText(_parsed: ParsedCompactJws): string {
