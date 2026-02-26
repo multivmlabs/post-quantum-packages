@@ -126,9 +126,6 @@ After manual confirmation for a phase, run these steps in order:
 3. **Submit and publish the stack:**
    - `gt submit --publish` — pushes all branches in the stack and creates/updates PRs for each.
 
-4. **Trigger automated review:**
-   - `gh pr comment <PR-number> --body "@codex review"`
-
 Rules:
 
 - Always run `gt sync` before `gt create` — it is safe on stack branches and keeps the stack rebased on latest trunk.
