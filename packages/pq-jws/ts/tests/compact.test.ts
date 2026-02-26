@@ -118,6 +118,32 @@ describe('parseJwsCompact', () => {
     expect(() => parseJwsCompact(compact)).toThrow(JwsValidationError);
   });
 
+  it('fails closed on unknown critical parameters', () => {
+    const compact = makeCompact(
+      JSON.stringify({ alg: 'ML-DSA-44', crit: ['exp'], exp: 'required' }),
+      makeBytes(8),
+      makeBytes(8),
+    );
+
+    expect(() => parseJwsCompact(compact)).toThrow(JwsValidationError);
+  });
+
+  it('enforces crit uniqueness and presence requirements', () => {
+    const duplicateCrit = makeCompact(
+      JSON.stringify({ alg: 'ML-DSA-44', crit: ['kid', 'kid'], kid: 'k1' }),
+      makeBytes(8),
+      makeBytes(8),
+    );
+    expect(() => parseJwsCompact(duplicateCrit)).toThrow(JwsValidationError);
+
+    const missingCritField = makeCompact(
+      JSON.stringify({ alg: 'ML-DSA-44', crit: ['kid'] }),
+      makeBytes(8),
+      makeBytes(8),
+    );
+    expect(() => parseJwsCompact(missingCritField)).toThrow(JwsValidationError);
+  });
+
   it('validates default bounds and override behavior', () => {
     expect(DEFAULT_JWS_COMPACT_PARSE_OPTIONS).toEqual({
       maxCompactLength: 262_144,
