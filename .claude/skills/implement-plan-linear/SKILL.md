@@ -93,30 +93,50 @@ Please run the manual verification steps for this phase and confirm when complet
 
 ## Graphite Workflow
 
-After manual confirmation for a phase, run these three steps in order:
+Phases form a **Graphite stack** — each phase branch stacks on top of the previous one. The stack is created incrementally: phase 1 branches off trunk, phase 2 branches off phase 1, and so on. The entire stack is merged together after all phases are complete and reviewed.
 
-1. **Sync trunk and clean up merged branches:**
-   - `gt sync` — pulls latest trunk, restacks open branches, prompts to delete merged branches (accept deletions when prompted).
+After manual confirmation for a phase, run these steps in order:
+
+1. **Sync trunk and restack:**
+   - `gt sync` — pulls latest trunk, restacks open branches, accepts deletion of merged branches. Safe to run whether on trunk or on an existing stack branch.
 
 2. **Create the branch with all changes committed:**
    - Fetch the branch name from the Linear issue via `mcp__linear__get_issue` (the `gitBranchName` field).
-   - `gt create -am "<phase commit message>" <linear-branch-name>`
-   - This stages all changes, commits them, and creates a new Graphite branch in one step. The branch name MUST be the one from the Linear issue (e.g. `feature/eng-1242`).
+   - `gt create -am "<type>(<package>/<language>): phase <N> - <description> (<issue-key>)" <linear-branch-name>`
+   - `gt create` stacks on whatever branch you are currently on — trunk for phase 1, the previous phase's branch for phase 2+.
+   - Commit message format:
+     - `<type>`: conventional commit type derived from the phase's intent:
+       - `feat` — new functionality, new API surface, new exports
+       - `fix` — bug fixes, correcting broken behavior
+       - `refactor` — restructuring without behavior change
+       - `test` — adding/updating tests only
+       - `docs` — documentation, README, comments only
+       - `chore` — build config, CI, package metadata, tooling
+     - `<package>`: package folder name under `packages/` (e.g. `pq-jws`, `pq-oid`, `pq-key-encoder`)
+     - `<language>`: language folder under the package (`ts`, `rust`, or `python`)
+     - `<N>`: phase number from the plan
+     - `<description>`: concise summary of the phase scope
+     - `<issue-key>`: Linear issue key provided at invocation (e.g. `ENG-1640`)
+   - Determine `<type>` by reading the phase title and scope from the plan — pick the type that best describes the primary intent of the phase.
+   - Examples:
+     - `feat(pq-jws/ts): phase 1 - define public contracts (ENG-1640)`
+     - `test(pq-jws/ts): phase 4 - comprehensive test suite (ENG-1643)`
+     - `fix(pq-oid/rust): phase 2 - correct DER length encoding (ENG-1500)`
 
 3. **Submit and publish the stack:**
-   - `gt submit --publish`
+   - `gt submit --publish` — pushes all branches in the stack and creates/updates PRs for each.
 
 4. **Trigger automated review:**
-   - After the PR is created/updated, post a review trigger comment:
    - `gh pr comment <PR-number> --body "@codex review"`
 
 Rules:
 
-- Always run `gt sync` first to avoid "already merged" errors blocking submit.
+- Always run `gt sync` before `gt create` — it is safe on stack branches and keeps the stack rebased on latest trunk.
 - The branch name comes from Linear's `gitBranchName` field — never invent branch names.
 - `gt create -am` handles staging, committing, and branch creation — do not use `git add` or `git commit` separately.
-- Use commit messages tied to phase scope, not generic text.
+- Commit message must follow: `<type>(<package>/<language>): phase <N> - <description> (<issue-key>)` — derive type from the phase intent, package/language from the plan path, phase number from the plan, and issue key from the input.
 - Do not run `gt submit --publish` before manual confirmation.
+- Do **not** merge individual phase PRs — the entire stack is merged together after all phases are complete.
 - If a `gt` command fails, report the exact command and error output.
 
 ## When to Use Sub-agents

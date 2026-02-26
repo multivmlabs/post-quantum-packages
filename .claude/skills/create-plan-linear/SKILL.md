@@ -1,6 +1,6 @@
 ---
 name: create-plan-linear
-description: "Create detailed implementation plans with codebase research and, after explicit user approval, publish the approved phased plan to Linear by creating a project under a chosen initiative plus phase and subphase issues assigned to Timur Guvenkaya."
+description: "Create detailed implementation plans with codebase research and, after explicit user approval, publish the approved phased plan to Linear by creating a project under a chosen initiative plus phase and subphase issues."
 argument-hint: "[ticket-or-file-path]"
 ---
 
@@ -128,8 +128,9 @@ Create a detailed implementation plan first. Only after explicit user approval, 
 - Set `summary` to a concise one-line overview from the plan.
 
 4. Resolve assignee
-- Resolve Timur via `mcp__linear__get_user` with query `timur guvenkaya`.
-- If no exact match is found, ask the user before assigning to another user.
+- Ask the user who should be assigned to the issues.
+- Resolve the provided name via `mcp__linear__get_user`.
+- If multiple matches or no match, list results and ask the user to confirm.
 
 5. Prepare labels and severity
 - Derive labels from phase scope (for example: `consensus`, `execution`, `networking`, `docs`, `testing`).
@@ -148,7 +149,7 @@ Create a detailed implementation plan first. Only after explicit user approval, 
 - Create one Linear issue per top-level phase under the created project.
 - Set issue title to the phase title.
 - Set issue description to the phase plan content (scope, changes, and success criteria).
-- Assign each issue to Timur.
+- Assign each issue to the resolved assignee.
 - Add derived labels, severity label, and priority.
 
 7. Create subphase sub-issues

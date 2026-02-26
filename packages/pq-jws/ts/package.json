@@ -9,7 +9,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -b",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -21,6 +21,9 @@
   ],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "pq-oid": "^1.0.1"
+  },
   "devDependencies": {
     "typescript": "^5.0.0"
   }
