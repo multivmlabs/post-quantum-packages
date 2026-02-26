@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "packages/pq-jws/scripts/generate-test-jws-fixtures.ts",
+  "fixtureFile": "fixtures.json",
+  "fixtureSha256": "0f3761592a8fd34b9b53a8d3d4c50feefa6a7fe40dd932376a1f3cafc63e1b8b",
+  "fixtureCount": 3,
+  "invalidVariantCount": 6,
+  "generationModel": "template-replay",
+  "deterministicControls": {
+    "canonicalFixtureOrdering": true,
+    "seedMode": "template-replay",
+    "note": "ML-DSA keygen/signing in OQS OpenSSL are randomized; committed fixtures are replayed deterministically by generator script."
+  },
+  "source": {
+    "backend": "openquantumsafe/oqs-ossl3",
+    "image": "openquantumsafe/oqs-ossl3@sha256:48b586a2734452fcaff76bad81cba63d37bc8410510e05a40674b450c0ded559",
+    "commandSet": [
+      "openssl genpkey -algorithm <alg>",
+      "openssl pkey -in <priv.pem> -pubout",
+      "openssl pkeyutl -sign -inkey <priv.pem> -in <signing-input.txt>"
+    ],
+    "capturedAt": "2026-02-26T11:48:55.576Z"
+  }
+}
