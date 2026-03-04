@@ -143,7 +143,7 @@
     },
     "packages/pq-key-encoder/ts": {
       "name": "pq-key-encoder",
-      "version": "1.0.1",
+      "version": "1.0.3",
       "dependencies": {
         "pq-oid": "^1.0.1",
       },
@@ -154,6 +154,9 @@
     "packages/pq-key-fingerprint/ts": {
       "name": "pq-key-fingerprint",
       "version": "0.0.1",
+      "dependencies": {
+        "pq-key-encoder": "^1.0.3",
+      },
       "devDependencies": {
         "typescript": "^5.0.0",
       },
@@ -174,7 +177,7 @@
     },
     "packages/pq-oid/ts": {
       "name": "pq-oid",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "devDependencies": {
         "typescript": "^5.0.0",
       },
