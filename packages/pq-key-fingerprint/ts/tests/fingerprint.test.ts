@@ -108,6 +108,20 @@ describe('fingerprint deterministic vectors', () => {
         encoding: 'hex',
       }),
     ).toBe(VECTOR_SHA512_HEX);
+
+    const sha384Bytes = await fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s', {
+      digest: 'SHA-384',
+      encoding: 'bytes',
+    });
+    expect(sha384Bytes).toBeInstanceOf(Uint8Array);
+    expect(sha384Bytes.length).toBe(48);
+
+    const sha512Bytes = await fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s', {
+      digest: 'SHA-512',
+      encoding: 'bytes',
+    });
+    expect(sha512Bytes).toBeInstanceOf(Uint8Array);
+    expect(sha512Bytes.length).toBe(64);
   });
 
   it('binds algorithm name into fingerprint input', async () => {
@@ -169,6 +183,25 @@ describe('fingerprint error behavior', () => {
     await expect(
       fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s', [] as never),
     ).rejects.toBeInstanceOf(InvalidFingerprintInputError);
+
+    await expect(
+      fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s', {
+        digset: 'SHA-512',
+      } as never),
+    ).rejects.toBeInstanceOf(InvalidFingerprintInputError);
+
+    await expect(
+      fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s', {
+        encoding: 'base64url',
+        extra: true,
+      } as never),
+    ).rejects.toBeInstanceOf(InvalidFingerprintInputError);
+  });
+
+  it('rejects algorithm names with NUL bytes', async () => {
+    await expect(
+      fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s\0evil' as never),
+    ).rejects.toBeInstanceOf(InvalidFingerprintInputError);
   });
 
   it('rejects empty digest and encoding values instead of defaulting', async () => {
@@ -219,9 +252,15 @@ describe('fingerprint error behavior', () => {
       writable: true,
     });
 
-    await expect(
-      fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s'),
-    ).rejects.toBeInstanceOf(RuntimeCapabilityError);
+    let caught: unknown;
+    try {
+      await fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s');
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeInstanceOf(RuntimeCapabilityError);
+    expect((caught as Error).cause).toBeInstanceOf(TypeError);
   });
 
   it('returns RuntimeCapabilityError when TextEncoder is unavailable', async () => {
