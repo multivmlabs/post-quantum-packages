@@ -89,20 +89,59 @@ interface FingerprintOptions {
 
 type FingerprintResult = string | Uint8Array;
 
-function fingerprintPublicKey(input: PublicKeyInput, options?: FingerprintOptions): Promise<FingerprintResult>;
+function fingerprintPublicKey(
+  input: PublicKeyInput,
+  options: FingerprintOptions & { encoding: 'bytes' },
+): Promise<Uint8Array>;
+function fingerprintPublicKey(input: PublicKeyInput, options?: FingerprintOptions): Promise<string>;
+function fingerprintPublicKeyBytes(
+  bytes: Uint8Array,
+  alg: AlgorithmName,
+  options: FingerprintOptions & { encoding: 'bytes' },
+): Promise<Uint8Array>;
 function fingerprintPublicKeyBytes(
   bytes: Uint8Array,
   alg: AlgorithmName,
   options?: FingerprintOptions,
-): Promise<FingerprintResult>;
-function fingerprintSPKI(spki: Uint8Array, options?: FingerprintOptions): Promise<FingerprintResult>;
-function fingerprintPEM(pem: string, options?: FingerprintOptions): Promise<FingerprintResult>;
-function fingerprintJWK(jwk: PQJwk, options?: FingerprintOptions): Promise<FingerprintResult>;
+): Promise<string>;
+function fingerprintSPKI(
+  spki: Uint8Array,
+  options: FingerprintOptions & { encoding: 'bytes' },
+): Promise<Uint8Array>;
+function fingerprintSPKI(spki: Uint8Array, options?: FingerprintOptions): Promise<string>;
+function fingerprintPEM(
+  pem: string,
+  options: FingerprintOptions & { encoding: 'bytes' },
+): Promise<Uint8Array>;
+function fingerprintPEM(pem: string, options?: FingerprintOptions): Promise<string>;
+function fingerprintJWK(
+  jwk: PQPublicJwk,
+  options: FingerprintOptions & { encoding: 'bytes' },
+): Promise<Uint8Array>;
+function fingerprintJWK(jwk: PQPublicJwk, options?: FingerprintOptions): Promise<string>;
 ```
 
 ## Compatibility Note
 
+Canonical fingerprint identity for interoperability is `SHA-256` with `hex` output (the default). Alternate digest or encoding choices are intended for advanced use-cases where both producer and consumer explicitly agree on format.
+
 All exported fingerprint entrypoints enforce a strict local error boundary by design. Upstream parser/validation failures from `pq-key-encoder` are translated into `pq-key-fingerprint` error classes (subclasses of `FingerprintError`) before they leave this package. This behavior is intentional and part of the package contract.
+
+`options` must be a plain object when provided and only supports `digest` plus `encoding`. Unknown option keys and invalid option values (for example, empty `digest`/`encoding` strings) are rejected rather than silently defaulting.
+
+The fingerprint preimage format is stable and versioned as:
+
+`UTF8("pq-key-fingerprint:v1") || 0x00 || UTF8(alg) || 0x00 || publicKeyBytes`
+
+`alg` uses canonical algorithm names emitted by `pq-key-encoder`; that canonicalization is part of this package contract. Algorithm names containing NUL bytes are rejected.
+
+Unexpected runtime/internal failures are wrapped as `FingerprintError` with the original failure attached via `cause` when available.
+
+Fingerprint digests are algorithm-scoped: the digest input is domain-separated and includes both the algorithm name and public key bytes. The same byte sequence under different algorithms yields different fingerprints.
+
+Runtime requirement: a WebCrypto `subtle.digest` implementation and `TextEncoder` must be available in the current runtime.
+
+Supported runtime baseline: Node.js 18+, Bun 1+, and modern browsers that expose global WebCrypto plus `TextEncoder`.
 
 ## License
 

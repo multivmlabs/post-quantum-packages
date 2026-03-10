@@ -10,13 +10,16 @@ import {
 } from '../src';
 
 async function expectTranslatedError(promise: Promise<unknown>): Promise<void> {
+  let caught: unknown;
   try {
     await promise;
-    throw new Error('Expected fingerprint API to throw.');
   } catch (error) {
-    expect(error).toBeInstanceOf(FingerprintError);
-    expect(error).not.toBeInstanceOf(KeyEncoderError);
+    caught = error;
   }
+
+  expect(caught, 'Expected fingerprint API to throw.').toBeDefined();
+  expect(caught).toBeInstanceOf(FingerprintError);
+  expect(caught).not.toBeInstanceOf(KeyEncoderError);
 }
 
 describe('fingerprint API contract', () => {
