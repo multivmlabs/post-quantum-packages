@@ -43,10 +43,16 @@ function readPem(name: string): string {
 }
 
 const ORIGINAL_CRYPTO = globalThis.crypto;
+const ORIGINAL_TEXT_ENCODER = globalThis.TextEncoder;
 
 beforeEach(() => {
   Object.defineProperty(globalThis, 'crypto', {
     value: ORIGINAL_CRYPTO,
+    configurable: true,
+    writable: true,
+  });
+  Object.defineProperty(globalThis, 'TextEncoder', {
+    value: ORIGINAL_TEXT_ENCODER,
     configurable: true,
     writable: true,
   });
@@ -155,6 +161,30 @@ describe('fingerprint error behavior', () => {
     ).rejects.toBeInstanceOf(UnsupportedDigestError);
   });
 
+  it('rejects malformed options values', async () => {
+    await expect(
+      fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s', null as never),
+    ).rejects.toBeInstanceOf(InvalidFingerprintInputError);
+
+    await expect(
+      fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s', [] as never),
+    ).rejects.toBeInstanceOf(InvalidFingerprintInputError);
+  });
+
+  it('rejects empty digest and encoding values instead of defaulting', async () => {
+    await expect(
+      fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s', {
+        digest: '' as never,
+      }),
+    ).rejects.toBeInstanceOf(UnsupportedDigestError);
+
+    await expect(
+      fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s', {
+        encoding: '' as never,
+      }),
+    ).rejects.toBeInstanceOf(InvalidFingerprintInputError);
+  });
+
   it('handles invalid input object/string errors', async () => {
     await expect(fingerprintPublicKey('bad-input' as never)).rejects.toBeInstanceOf(
       InvalidFingerprintInputError,
@@ -185,6 +215,18 @@ describe('fingerprint error behavior', () => {
           },
         },
       },
+      configurable: true,
+      writable: true,
+    });
+
+    await expect(
+      fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s'),
+    ).rejects.toBeInstanceOf(RuntimeCapabilityError);
+  });
+
+  it('returns RuntimeCapabilityError when TextEncoder is unavailable', async () => {
+    Object.defineProperty(globalThis, 'TextEncoder', {
+      value: undefined,
       configurable: true,
       writable: true,
     });

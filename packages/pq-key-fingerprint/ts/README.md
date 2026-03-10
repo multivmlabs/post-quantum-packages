@@ -104,6 +104,10 @@ function fingerprintJWK(jwk: PQPublicJwk, options?: FingerprintOptions): Promise
 
 All exported fingerprint entrypoints enforce a strict local error boundary by design. Upstream parser/validation failures from `pq-key-encoder` are translated into `pq-key-fingerprint` error classes (subclasses of `FingerprintError`) before they leave this package. This behavior is intentional and part of the package contract.
 
+`options` must be an object when provided. Invalid option values (for example, empty `digest`/`encoding` strings) are rejected rather than silently defaulting.
+
+Unexpected runtime/internal failures are wrapped as `FingerprintError` with the original failure attached via `cause` when available.
+
 Fingerprint digests are algorithm-scoped: the digest input is domain-separated and includes both the algorithm name and public key bytes. The same byte sequence under different algorithms yields different fingerprints.
 
 ## License

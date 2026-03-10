@@ -7,6 +7,7 @@ import {
   fromPEM,
   fromSPKI,
   type KeyData,
+  KeyEncoderError,
   type PQPublicJwk,
 } from 'pq-key-encoder';
 import {
@@ -28,29 +29,57 @@ import type {
 const DEFAULT_DIGEST: FingerprintDigest = 'SHA-256';
 const DEFAULT_ENCODING: FingerprintEncoding = 'hex';
 const FINGERPRINT_INPUT_DOMAIN = 'pq-key-fingerprint:v1';
-const TEXT_ENCODER = new TextEncoder();
+let textEncoder: TextEncoder | undefined;
 
 const SUPPORTED_DIGESTS = new Set<FingerprintDigest>(['SHA-256', 'SHA-384', 'SHA-512']);
 const SUPPORTED_ENCODINGS = new Set<FingerprintEncoding>(['hex', 'base64', 'base64url', 'bytes']);
 
-function resolveDigest(digest?: FingerprintDigest): FingerprintDigest {
-  if (!digest) {
+function resolveDigest(digest: unknown): FingerprintDigest {
+  if (digest === undefined) {
     return DEFAULT_DIGEST;
   }
-  if (!SUPPORTED_DIGESTS.has(digest)) {
+  if (!SUPPORTED_DIGESTS.has(digest as FingerprintDigest)) {
     throw new UnsupportedDigestError(`Unsupported digest: ${String(digest)}.`);
   }
-  return digest;
+  return digest as FingerprintDigest;
 }
 
-function resolveEncoding(encoding?: FingerprintEncoding): FingerprintEncoding {
-  if (!encoding) {
+function resolveEncoding(encoding: unknown): FingerprintEncoding {
+  if (encoding === undefined) {
     return DEFAULT_ENCODING;
   }
-  if (!SUPPORTED_ENCODINGS.has(encoding)) {
+  if (!SUPPORTED_ENCODINGS.has(encoding as FingerprintEncoding)) {
     throw new InvalidFingerprintInputError(`Unsupported encoding: ${String(encoding)}.`);
   }
-  return encoding;
+  return encoding as FingerprintEncoding;
+}
+
+function normalizeOptions(options: unknown): FingerprintOptions {
+  if (options === undefined) {
+    return {};
+  }
+  if (typeof options !== 'object' || options === null || Array.isArray(options)) {
+    throw new InvalidFingerprintInputError('options must be an object.');
+  }
+  return options as FingerprintOptions;
+}
+
+function getTextEncoder(): TextEncoder {
+  if (typeof TextEncoder !== 'function') {
+    throw new RuntimeCapabilityError('TextEncoder is not available in this runtime.');
+  }
+  if (!textEncoder) {
+    textEncoder = new TextEncoder();
+  }
+  return textEncoder;
+}
+
+function getSubtleCrypto(): SubtleCrypto {
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle || typeof subtle.digest !== 'function') {
+    throw new RuntimeCapabilityError('WebCrypto subtle.digest is not available in this runtime.');
+  }
+  return subtle;
 }
 
 function bytesToHex(bytes: Uint8Array): string {
@@ -75,10 +104,7 @@ function encodeFingerprint(bytes: Uint8Array, encoding: FingerprintEncoding): Fi
 }
 
 async function digestBytes(bytes: Uint8Array, digest: FingerprintDigest): Promise<Uint8Array> {
-  const subtle = globalThis.crypto?.subtle;
-  if (!subtle) {
-    throw new RuntimeCapabilityError('WebCrypto subtle.digest is not available in this runtime.');
-  }
+  const subtle = getSubtleCrypto();
 
   let digestResult: ArrayBuffer;
   try {
@@ -92,8 +118,9 @@ async function digestBytes(bytes: Uint8Array, digest: FingerprintDigest): Promis
 }
 
 function createDigestInput(keyData: PublicKeyData): Uint8Array {
-  const domainBytes = TEXT_ENCODER.encode(FINGERPRINT_INPUT_DOMAIN);
-  const algorithmBytes = TEXT_ENCODER.encode(keyData.alg);
+  const encoder = getTextEncoder();
+  const domainBytes = encoder.encode(FINGERPRINT_INPUT_DOMAIN);
+  const algorithmBytes = encoder.encode(keyData.alg);
 
   const digestInput = new Uint8Array(
     domainBytes.length + 1 + algorithmBytes.length + 1 + keyData.bytes.length,
@@ -149,12 +176,10 @@ function normalizePublicKeyInput(input: PublicKeyInput): PublicKeyData {
   return ensurePublicKeyData(keyData);
 }
 
-async function fingerprintKeyData(
-  keyData: KeyData,
-  options: FingerprintOptions = {},
-): Promise<FingerprintResult> {
-  const digest = resolveDigest(options.digest);
-  const encoding = resolveEncoding(options.encoding);
+async function fingerprintKeyData(keyData: KeyData, options: unknown): Promise<FingerprintResult> {
+  const normalizedOptions = normalizeOptions(options);
+  const digest = resolveDigest(normalizedOptions.digest);
+  const encoding = resolveEncoding(normalizedOptions.encoding);
   const publicKeyData = ensurePublicKeyData(keyData);
   const digestInput = createDigestInput(publicKeyData);
   const digestOutput = await digestBytes(digestInput, digest);
@@ -166,11 +191,15 @@ function translateError(error: unknown): FingerprintError {
     return error;
   }
 
-  if (error instanceof Error) {
-    return new InvalidFingerprintInputError(error.message);
+  if (error instanceof KeyEncoderError) {
+    return new InvalidFingerprintInputError(error.message, { cause: error });
   }
 
-  return new InvalidFingerprintInputError('Fingerprinting failed due to an unknown error.');
+  if (error instanceof Error) {
+    return new FingerprintError('Unexpected fingerprint failure.', { cause: error });
+  }
+
+  return new FingerprintError('Unexpected fingerprint failure.');
 }
 
 async function withErrorBoundary<T>(operation: () => Promise<T>): Promise<T> {
@@ -181,57 +210,52 @@ async function withErrorBoundary<T>(operation: () => Promise<T>): Promise<T> {
   }
 }
 
+async function fingerprintFrom(
+  keyDataResolver: () => KeyData,
+  options?: FingerprintOptions,
+): Promise<FingerprintResult> {
+  return withErrorBoundary(async () => fingerprintKeyData(keyDataResolver(), options));
+}
+
 export async function fingerprintPublicKey(
   input: PublicKeyInput,
-  options: FingerprintOptions = {},
+  options?: FingerprintOptions,
 ): Promise<FingerprintResult> {
-  return withErrorBoundary(async () => {
-    const keyData = normalizePublicKeyInput(input);
-    return fingerprintKeyData(keyData, options);
-  });
+  return fingerprintFrom(() => normalizePublicKeyInput(input), options);
 }
 
 export async function fingerprintPublicKeyBytes(
   bytes: Uint8Array,
   alg: AlgorithmName,
-  options: FingerprintOptions = {},
+  options?: FingerprintOptions,
 ): Promise<FingerprintResult> {
-  return withErrorBoundary(async () => {
-    const keyData: KeyData = {
+  return fingerprintFrom(
+    () => ({
       alg,
       type: 'public',
       bytes,
-    };
-    return fingerprintKeyData(keyData, options);
-  });
+    }),
+    options,
+  );
 }
 
 export async function fingerprintSPKI(
   spki: Uint8Array,
-  options: FingerprintOptions = {},
+  options?: FingerprintOptions,
 ): Promise<FingerprintResult> {
-  return withErrorBoundary(async () => {
-    const keyData = fromSPKI(spki);
-    return fingerprintKeyData(keyData, options);
-  });
+  return fingerprintFrom(() => fromSPKI(spki), options);
 }
 
 export async function fingerprintPEM(
   pem: string,
-  options: FingerprintOptions = {},
+  options?: FingerprintOptions,
 ): Promise<FingerprintResult> {
-  return withErrorBoundary(async () => {
-    const keyData = fromPEM(pem);
-    return fingerprintKeyData(keyData, options);
-  });
+  return fingerprintFrom(() => fromPEM(pem), options);
 }
 
 export async function fingerprintJWK(
   jwk: PQPublicJwk,
-  options: FingerprintOptions = {},
+  options?: FingerprintOptions,
 ): Promise<FingerprintResult> {
-  return withErrorBoundary(async () => {
-    const keyData = fromJWK(jwk);
-    return fingerprintKeyData(keyData, options);
-  });
+  return fingerprintFrom(() => fromJWK(jwk), options);
 }
