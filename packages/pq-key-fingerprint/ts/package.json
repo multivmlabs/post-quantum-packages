@@ -1,6 +1,6 @@
 {
   "name": "pq-key-fingerprint",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Generate fingerprints/hashes of PQ public keys",
   "type": "module",
   "main": "./dist/index.js",
