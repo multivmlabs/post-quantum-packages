@@ -180,12 +180,7 @@ describe('fingerprint error behavior', () => {
     ];
 
     for (const call of calls) {
-      try {
-        await call();
-        throw new Error('Expected call to throw.');
-      } catch (error) {
-        expect(error).toBeInstanceOf(FingerprintError);
-      }
+      await expect(call()).rejects.toBeInstanceOf(FingerprintError);
     }
   });
 });
