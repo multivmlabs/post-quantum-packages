@@ -97,12 +97,14 @@ function fingerprintPublicKeyBytes(
 ): Promise<FingerprintResult>;
 function fingerprintSPKI(spki: Uint8Array, options?: FingerprintOptions): Promise<FingerprintResult>;
 function fingerprintPEM(pem: string, options?: FingerprintOptions): Promise<FingerprintResult>;
-function fingerprintJWK(jwk: PQJwk, options?: FingerprintOptions): Promise<FingerprintResult>;
+function fingerprintJWK(jwk: PQPublicJwk, options?: FingerprintOptions): Promise<FingerprintResult>;
 ```
 
 ## Compatibility Note
 
 All exported fingerprint entrypoints enforce a strict local error boundary by design. Upstream parser/validation failures from `pq-key-encoder` are translated into `pq-key-fingerprint` error classes (subclasses of `FingerprintError`) before they leave this package. This behavior is intentional and part of the package contract.
+
+Fingerprint digests are algorithm-scoped: the digest input is domain-separated and includes both the algorithm name and public key bytes. The same byte sequence under different algorithms yields different fingerprints.
 
 ## License
 

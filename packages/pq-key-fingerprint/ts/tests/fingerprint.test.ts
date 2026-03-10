@@ -17,14 +17,14 @@ import {
 const FIXTURE_DIR = new URL('../../test-data/test-keys/', import.meta.url);
 const VECTOR_BYTES = new Uint8Array(Array.from({ length: 32 }, (_, index) => index));
 
-const VECTOR_SHA256_HEX = '630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd';
-const VECTOR_SHA256_BASE64 = 'Yw3NKWbEM2aRElRIu7JbT/QSpJxzLbLIq8G4WBvXEN0=';
-const VECTOR_SHA256_BASE64URL = 'Yw3NKWbEM2aRElRIu7JbT_QSpJxzLbLIq8G4WBvXEN0';
+const VECTOR_SHA256_HEX = 'c93cb848642db990e05faf50407802b9dc78358d5e2ebacbd5663405b650715f';
+const VECTOR_SHA256_BASE64 = 'yTy4SGQtuZDgX69QQHgCudx4NY1eLrrL1WY0BbZQcV8=';
+const VECTOR_SHA256_BASE64URL = 'yTy4SGQtuZDgX69QQHgCudx4NY1eLrrL1WY0BbZQcV8';
 
 const VECTOR_SHA384_HEX =
-  'e7112491faeefd57786da73f367b25a6f5769f5c98fa7b704d8d37747724a647371989e8b0fe8d3cb23f9eedd528456b';
+  'f5616aeb4298f9b13d5d779d1f8219fc2343fe83cd3ab5ef493c6c216c2bd849c555f835966d9cdf0a7459aac991b941';
 const VECTOR_SHA512_HEX =
-  '3d94eea49c580aef816935762be049559d6d1440dede12e6a125f1841fff8e6fa9d71862a3e5746b571be3d187b0041046f52ebd850c7cbd5fde8ee38473b649';
+  'ab5d794d711f6500d759d7dac645a2da327e3875c47d430e53d0cf895dfabf42377094d99e2e44967e68b23bc17c72f74870b278a7a56287d8652204f5d19013';
 
 function hexToBytes(hex: string): Uint8Array {
   const bytes = new Uint8Array(hex.length / 2);
@@ -103,6 +103,12 @@ describe('fingerprint deterministic vectors', () => {
       }),
     ).toBe(VECTOR_SHA512_HEX);
   });
+
+  it('binds algorithm name into fingerprint input', async () => {
+    const sha2 = await fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s');
+    const shake = await fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHAKE-128s');
+    expect(sha2).not.toBe(shake);
+  });
 });
 
 describe('fingerprint input forms', () => {
@@ -161,6 +167,24 @@ describe('fingerprint error behavior', () => {
   it('returns RuntimeCapabilityError when crypto.subtle is unavailable', async () => {
     Object.defineProperty(globalThis, 'crypto', {
       value: {},
+      configurable: true,
+      writable: true,
+    });
+
+    await expect(
+      fingerprintPublicKeyBytes(VECTOR_BYTES, 'SLH-DSA-SHA2-128s'),
+    ).rejects.toBeInstanceOf(RuntimeCapabilityError);
+  });
+
+  it('maps subtle.digest runtime failures to RuntimeCapabilityError', async () => {
+    Object.defineProperty(globalThis, 'crypto', {
+      value: {
+        subtle: {
+          digest: async () => {
+            throw new TypeError('digest failure');
+          },
+        },
+      },
       configurable: true,
       writable: true,
     });

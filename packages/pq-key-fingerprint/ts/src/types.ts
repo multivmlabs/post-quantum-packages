@@ -1,4 +1,4 @@
-import type { AlgorithmName as EncoderAlgorithmName, KeyData, PQJwk } from 'pq-key-encoder';
+import type { AlgorithmName as EncoderAlgorithmName, KeyData } from 'pq-key-encoder';
 
 export type { AlgorithmName } from 'pq-key-encoder';
 
@@ -17,7 +17,5 @@ export type PublicKeyData = Omit<KeyData, 'type' | 'alg'> & {
 };
 
 export type PublicKeyInput = PublicKeyData | { alg: EncoderAlgorithmName; bytes: Uint8Array };
-
-export type FingerprintInput = PublicKeyInput | Uint8Array | string | PQJwk;
 
 export type FingerprintResult = string | Uint8Array;

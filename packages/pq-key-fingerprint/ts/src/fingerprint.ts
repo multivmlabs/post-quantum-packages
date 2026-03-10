@@ -1,13 +1,13 @@
 import {
+  type AlgorithmName,
   assertKeyData,
   encodeBase64,
   encodeBase64Url,
   fromJWK,
   fromPEM,
   fromSPKI,
-  type AlgorithmName,
   type KeyData,
-  type PQJwk,
+  type PQPublicJwk,
 } from 'pq-key-encoder';
 import {
   FingerprintError,
@@ -27,6 +27,8 @@ import type {
 
 const DEFAULT_DIGEST: FingerprintDigest = 'SHA-256';
 const DEFAULT_ENCODING: FingerprintEncoding = 'hex';
+const FINGERPRINT_INPUT_DOMAIN = 'pq-key-fingerprint:v1';
+const TEXT_ENCODER = new TextEncoder();
 
 const SUPPORTED_DIGESTS = new Set<FingerprintDigest>(['SHA-256', 'SHA-384', 'SHA-512']);
 const SUPPORTED_ENCODINGS = new Set<FingerprintEncoding>(['hex', 'base64', 'base64url', 'bytes']);
@@ -78,12 +80,38 @@ async function digestBytes(bytes: Uint8Array, digest: FingerprintDigest): Promis
     throw new RuntimeCapabilityError('WebCrypto subtle.digest is not available in this runtime.');
   }
 
-  const digestInput = bytes.buffer.slice(
-    bytes.byteOffset,
-    bytes.byteOffset + bytes.byteLength,
-  ) as ArrayBuffer;
-  const digestResult = await subtle.digest(digest, digestInput);
+  let digestResult: ArrayBuffer;
+  try {
+    digestResult = await subtle.digest(digest, bytes as unknown as BufferSource);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown digest failure.';
+    throw new RuntimeCapabilityError(`WebCrypto subtle.digest failed: ${message}`);
+  }
+
   return new Uint8Array(digestResult);
+}
+
+function createDigestInput(keyData: PublicKeyData): Uint8Array {
+  const domainBytes = TEXT_ENCODER.encode(FINGERPRINT_INPUT_DOMAIN);
+  const algorithmBytes = TEXT_ENCODER.encode(keyData.alg);
+
+  const digestInput = new Uint8Array(
+    domainBytes.length + 1 + algorithmBytes.length + 1 + keyData.bytes.length,
+  );
+
+  let offset = 0;
+  digestInput.set(domainBytes, offset);
+  offset += domainBytes.length;
+  digestInput[offset] = 0;
+  offset += 1;
+
+  digestInput.set(algorithmBytes, offset);
+  offset += algorithmBytes.length;
+  digestInput[offset] = 0;
+  offset += 1;
+
+  digestInput.set(keyData.bytes, offset);
+  return digestInput;
 }
 
 function ensurePublicKeyData(keyData: KeyData): PublicKeyData {
@@ -128,7 +156,8 @@ async function fingerprintKeyData(
   const digest = resolveDigest(options.digest);
   const encoding = resolveEncoding(options.encoding);
   const publicKeyData = ensurePublicKeyData(keyData);
-  const digestOutput = await digestBytes(publicKeyData.bytes, digest);
+  const digestInput = createDigestInput(publicKeyData);
+  const digestOutput = await digestBytes(digestInput, digest);
   return encodeFingerprint(digestOutput, encoding);
 }
 
@@ -198,7 +227,7 @@ export async function fingerprintPEM(
 }
 
 export async function fingerprintJWK(
-  jwk: PQJwk,
+  jwk: PQPublicJwk,
   options: FingerprintOptions = {},
 ): Promise<FingerprintResult> {
   return withErrorBoundary(async () => {
