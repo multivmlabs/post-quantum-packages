@@ -39,11 +39,12 @@ How should I proceed?
 For each phase, execute in this order:
 
 1. Implement all code changes for the phase.
-2. Update plan checkboxes for completed implementation work.
-3. Run automated acceptance criteria.
-4. Pause and wait for explicit manual verification confirmation.
-5. After confirmation, run Graphite stack commands.
-6. Update Linear issue status/comments with outcome and links.
+2. Run Biome autofix/check for touched TypeScript/JavaScript/JSON files and fix issues until clean.
+3. Update plan checkboxes for completed implementation work.
+4. Run automated acceptance criteria.
+5. Pause and wait for explicit manual verification confirmation.
+6. After confirmation, run Graphite stack commands.
+7. Update Linear issue status/comments with outcome and links.
 
 ## Implementation Philosophy
 
@@ -55,6 +56,7 @@ For each phase, execute in this order:
 ## Acceptance Criteria
 
 - Run the exact commands required by the plan and repository acceptance checklist.
+- For TypeScript/JavaScript/JSON changes, always run Biome with autofix first (for example `bunx biome check --write <paths>`), then run Biome again without `--write` to confirm clean output.
 - If phase-specific commands are not provided, default to the repo acceptance criteria in `CLAUDE.md`.
 - Do not continue to Graphite or final Linear state updates until automated checks pass.
 - If checks fail, fix issues and rerun until passing or blocked.
@@ -151,6 +153,7 @@ Keep sub-agent usage focused; provide specific questions and file paths when spa
 For each completed phase, report:
 
 - files changed
+- Biome commands run and pass/fail result
 - acceptance commands and pass/fail result
 - manual verification confirmation state
 - Linear updates performed
