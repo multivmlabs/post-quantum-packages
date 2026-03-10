@@ -196,6 +196,33 @@ describe('fingerprint error behavior', () => {
         extra: true,
       } as never),
     ).rejects.toBeInstanceOf(InvalidFingerprintInputError);
+
+    await expect(
+      fingerprintPublicKeyBytes(
+        VECTOR_BYTES,
+        'SLH-DSA-SHA2-128s',
+        Object.create({
+          digest: 'SHA-512',
+        }) as never,
+      ),
+    ).rejects.toBeInstanceOf(InvalidFingerprintInputError);
+  });
+
+  it('rejects non-canonical algorithm names', async () => {
+    await expect(
+      fingerprintPublicKeyBytes(VECTOR_BYTES, 'slh-dsa-sha2-128s' as never),
+    ).rejects.toBeInstanceOf(InvalidFingerprintInputError);
+  });
+
+  it('rejects prototype-derived public key inputs', async () => {
+    const inheritedInput = Object.create({
+      alg: 'SLH-DSA-SHA2-128s',
+      bytes: VECTOR_BYTES,
+    });
+
+    await expect(fingerprintPublicKey(inheritedInput as never)).rejects.toBeInstanceOf(
+      InvalidFingerprintInputError,
+    );
   });
 
   it('rejects algorithm names with NUL bytes', async () => {

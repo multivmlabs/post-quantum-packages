@@ -37,6 +37,20 @@ const SUPPORTED_DIGESTS = new Set<FingerprintDigest>(['SHA-256', 'SHA-384', 'SHA
 const SUPPORTED_ENCODINGS = new Set<FingerprintEncoding>(['hex', 'base64', 'base64url', 'bytes']);
 const ALLOWED_OPTION_KEYS = new Set<keyof FingerprintOptions>(['digest', 'encoding']);
 
+type UnknownRecord = Record<PropertyKey, unknown>;
+
+function isPlainObject(value: unknown): value is UnknownRecord {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function hasOwn(record: UnknownRecord, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(record, key);
+}
+
 function resolveDigest(digest: unknown): FingerprintDigest {
   if (digest === undefined) {
     return DEFAULT_DIGEST;
@@ -61,17 +75,25 @@ function normalizeOptions(options: unknown): FingerprintOptions {
   if (options === undefined) {
     return {};
   }
-  if (typeof options !== 'object' || options === null || Array.isArray(options)) {
-    throw new InvalidFingerprintInputError('options must be an object.');
+  if (!isPlainObject(options)) {
+    throw new InvalidFingerprintInputError('options must be a plain object.');
   }
 
-  for (const key of Object.keys(options)) {
-    if (!ALLOWED_OPTION_KEYS.has(key as keyof FingerprintOptions)) {
-      throw new InvalidFingerprintInputError(`Unknown option: ${key}.`);
+  for (const key of Reflect.ownKeys(options)) {
+    if (typeof key !== 'string' || !ALLOWED_OPTION_KEYS.has(key as keyof FingerprintOptions)) {
+      throw new InvalidFingerprintInputError(`Unknown option: ${String(key)}.`);
     }
   }
 
-  return options as FingerprintOptions;
+  const normalized: FingerprintOptions = {};
+  if (hasOwn(options, 'digest')) {
+    normalized.digest = options.digest as FingerprintDigest | undefined;
+  }
+  if (hasOwn(options, 'encoding')) {
+    normalized.encoding = options.encoding as FingerprintEncoding | undefined;
+  }
+
+  return normalized;
 }
 
 function getTextEncoder(): TextEncoder {
@@ -172,22 +194,33 @@ function ensurePublicKeyData(keyData: KeyData): PublicKeyData {
 }
 
 function normalizePublicKeyInput(input: PublicKeyInput): PublicKeyData {
-  if (typeof input !== 'object' || input === null) {
+  if (!isPlainObject(input)) {
     throw new InvalidFingerprintInputError('input must be a public key object.');
   }
 
-  if ('type' in input) {
-    return ensurePublicKeyData(input as KeyData);
+  const inputRecord = input as UnknownRecord;
+
+  if (hasOwn(inputRecord, 'type')) {
+    if (!hasOwn(inputRecord, 'alg') || !hasOwn(inputRecord, 'bytes')) {
+      throw new InvalidFingerprintInputError('input must include type, alg, and bytes.');
+    }
+
+    const keyData: KeyData = {
+      alg: inputRecord.alg as AlgorithmName,
+      type: inputRecord.type as KeyData['type'],
+      bytes: inputRecord.bytes as Uint8Array,
+    };
+    return ensurePublicKeyData(keyData);
   }
 
-  if (!('alg' in input) || !('bytes' in input)) {
+  if (!hasOwn(inputRecord, 'alg') || !hasOwn(inputRecord, 'bytes')) {
     throw new InvalidFingerprintInputError('input must include alg and bytes.');
   }
 
   const keyData: KeyData = {
-    alg: input.alg,
+    alg: inputRecord.alg as AlgorithmName,
     type: 'public',
-    bytes: input.bytes,
+    bytes: inputRecord.bytes as Uint8Array,
   };
   return ensurePublicKeyData(keyData);
 }

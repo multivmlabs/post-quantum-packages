@@ -123,9 +123,11 @@ function fingerprintJWK(jwk: PQPublicJwk, options?: FingerprintOptions): Promise
 
 ## Compatibility Note
 
+Canonical fingerprint identity for interoperability is `SHA-256` with `hex` output (the default). Alternate digest or encoding choices are intended for advanced use-cases where both producer and consumer explicitly agree on format.
+
 All exported fingerprint entrypoints enforce a strict local error boundary by design. Upstream parser/validation failures from `pq-key-encoder` are translated into `pq-key-fingerprint` error classes (subclasses of `FingerprintError`) before they leave this package. This behavior is intentional and part of the package contract.
 
-`options` must be an object when provided and only supports `digest` plus `encoding`. Unknown option keys and invalid option values (for example, empty `digest`/`encoding` strings) are rejected rather than silently defaulting.
+`options` must be a plain object when provided and only supports `digest` plus `encoding`. Unknown option keys and invalid option values (for example, empty `digest`/`encoding` strings) are rejected rather than silently defaulting.
 
 The fingerprint preimage format is stable and versioned as:
 
@@ -138,6 +140,8 @@ Unexpected runtime/internal failures are wrapped as `FingerprintError` with the 
 Fingerprint digests are algorithm-scoped: the digest input is domain-separated and includes both the algorithm name and public key bytes. The same byte sequence under different algorithms yields different fingerprints.
 
 Runtime requirement: a WebCrypto `subtle.digest` implementation and `TextEncoder` must be available in the current runtime.
+
+Supported runtime baseline: Node.js 18+, Bun 1+, and modern browsers that expose global WebCrypto plus `TextEncoder`.
 
 ## License
 
