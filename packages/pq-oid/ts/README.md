@@ -21,6 +21,12 @@ npm install pq-oid
 bun add pq-oid
 ```
 
+## Migration Note
+
+`pq-oid` remains the low-level OID primitive package. For canonical multi-identifier mapping (`name`/`oid`/`jose`/`cose`/`x509`), use `pq-algorithm-id`.
+
+The JOSE/COSE helpers in `pq-oid` are still available for compatibility and are now deprecated in favor of `pq-algorithm-id`.
+
 ## Usage
 
 ```typescript
@@ -43,7 +49,7 @@ OID.toName('2.16.840.1.101.3.4.3.18')       // 'ML-DSA-65'
 OID.toBytes('2.16.840.1.101.3.4.4.1')       // Uint8Array
 OID.fromBytes(bytes)                         // '2.16.840.1.101.3.4.4.1'
 
-// JOSE/COSE mappings (ML-DSA only)
+// JOSE/COSE mappings (ML-DSA only, compatibility path)
 OID.toJOSE('ML-DSA-65')                     // 'ML-DSA-65'
 OID.toCOSE('ML-DSA-65')                     // -48
 OID.fromJOSE('ML-DSA-65')                   // 'ML-DSA-65'
@@ -66,6 +72,16 @@ Algorithm.list()                            // All 18 algorithm names
 Algorithm.listByType('kem')                 // ['ML-KEM-512', 'ML-KEM-768', 'ML-KEM-1024']
 Algorithm.listByType('sign')                // ML-DSA + SLH-DSA variants
 Algorithm.listByFamily('ML-DSA')            // ['ML-DSA-44', 'ML-DSA-65', 'ML-DSA-87']
+```
+
+For new identifier mapping code:
+
+```typescript
+import { fromJose, toCose, toOid } from 'pq-algorithm-id';
+
+toOid('ML-DSA-65');      // '2.16.840.1.101.3.4.3.18'
+fromJose('ML-DSA-65');   // 'ML-DSA-65'
+toCose('ML-DSA-65');     // -49
 ```
 
 ## Supported Algorithms

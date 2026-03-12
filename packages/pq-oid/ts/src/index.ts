@@ -1,8 +1,8 @@
 // Main exports for pq-oid package
 
 import { decodeOid, encodeOid } from './encoding';
-import { fromCOSE, toCOSE } from './mappings/cose';
-import { fromJOSE, toJOSE } from './mappings/jose';
+import { fromCOSE as fromCOSEMapping, toCOSE as toCOSEMapping } from './mappings/cose';
+import { fromJOSE as fromJOSEMapping, toJOSE as toJOSEMapping } from './mappings/jose';
 import {
   // Lookup functions
   fromName,
@@ -36,6 +36,18 @@ export { SlhDsa } from './slh-dsa';
 
 // Re-export all types
 export * from './types';
+
+/** @deprecated Use toJose() from 'pq-algorithm-id'. */
+export const toJOSE = toJOSEMapping;
+
+/** @deprecated Use fromJose() from 'pq-algorithm-id'. */
+export const fromJOSE = fromJOSEMapping;
+
+/** @deprecated Use toCose() from 'pq-algorithm-id'. */
+export const toCOSE = toCOSEMapping;
+
+/** @deprecated Use fromCose() from 'pq-algorithm-id'. */
+export const fromCOSE = fromCOSEMapping;
 
 // Unified OID object with all constants and functions
 export const OID = {
@@ -74,10 +86,14 @@ export const OID = {
   fromBytes: decodeOid,
 
   // JOSE mapping functions
+  /** @deprecated Use toJose() from 'pq-algorithm-id'. */
   toJOSE,
+  /** @deprecated Use fromJose() from 'pq-algorithm-id'. */
   fromJOSE,
 
   // COSE mapping functions
+  /** @deprecated Use toCose() from 'pq-algorithm-id'. */
   toCOSE,
+  /** @deprecated Use fromCose() from 'pq-algorithm-id'. */
   fromCOSE,
 };
