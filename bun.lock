@@ -10,7 +10,10 @@
     },
     "packages/pq-algorithm-id/ts": {
       "name": "pq-algorithm-id",
-      "version": "0.0.1",
+      "version": "1.0.0",
+      "dependencies": {
+        "pq-oid": "1.0.2",
+      },
       "devDependencies": {
         "typescript": "^5.0.0",
       },
@@ -153,7 +156,7 @@
     },
     "packages/pq-key-fingerprint/ts": {
       "name": "pq-key-fingerprint",
-      "version": "0.0.1",
+      "version": "1.0.0",
       "dependencies": {
         "pq-key-encoder": "^1.0.3",
       },

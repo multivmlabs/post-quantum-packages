@@ -1,6 +1,6 @@
 {
   "name": "pq-algorithm-id",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Algorithm identifier mappings (JOSE, COSE, X.509)",
   "type": "module",
   "main": "./dist/index.js",
