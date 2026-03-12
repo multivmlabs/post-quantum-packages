@@ -1,74 +1,72 @@
-import { OID } from 'pq-oid';
-import { UnknownAlgorithmError, UnknownIdentifierError, UnsupportedMappingError } from './errors';
-import { getIdentifierRecord, listIdentifierRecords } from './registry';
-import type { AlgorithmName, CoseIdentifier, JoseIdentifier } from './types';
+import { isCanonicalOid } from 'pq-oid';
+import {
+  InvalidArgumentError,
+  RegistryInvariantError,
+  UnknownIdentifierError,
+  UnsupportedMappingError,
+} from './errors.js';
+import { deriveOidFromName, getIdentifierRecord, listIdentifierRecords } from './registry.js';
+import type { AlgorithmName, CoseIdentifier, JoseIdentifier } from './types.js';
+import { assertAlgorithmNameInput } from './validation.js';
+import { describeUnknownValue } from './value-format.js';
 
 const JOSE_TO_NAME = new Map<JoseIdentifier, AlgorithmName>();
 const COSE_TO_NAME = new Map<CoseIdentifier, AlgorithmName>();
+const OID_TO_NAME = new Map<string, AlgorithmName>();
 
-for (const record of listIdentifierRecords()) {
-  if (record.jose !== undefined) {
-    JOSE_TO_NAME.set(record.jose, record.name);
+function registerUniqueIdentifier<T extends string | number>(
+  map: Map<T, AlgorithmName>,
+  identifierType: 'JOSE' | 'COSE' | 'OID',
+  identifier: T,
+  algorithmName: AlgorithmName,
+): void {
+  const existingName = map.get(identifier);
+  if (existingName !== undefined) {
+    throw new RegistryInvariantError(
+      `Duplicate ${identifierType} identifier '${String(identifier)}' for '${existingName}' and '${algorithmName}'.`,
+    );
   }
-  if (record.cose !== undefined) {
-    COSE_TO_NAME.set(record.cose, record.name);
-  }
+  map.set(identifier, algorithmName);
 }
 
-function isCanonicalOid(oid: string): boolean {
-  if (oid.length === 0 || oid.trim() !== oid) {
-    return false;
-  }
+for (const record of listIdentifierRecords()) {
+  registerUniqueIdentifier(OID_TO_NAME, 'OID', deriveOidFromName(record.name), record.name);
 
-  if (!/^\d+(?:\.\d+)+$/.test(oid)) {
-    return false;
+  if (record.jose !== undefined) {
+    registerUniqueIdentifier(JOSE_TO_NAME, 'JOSE', record.jose, record.name);
   }
-
-  const arcs = oid.split('.');
-  if (arcs.some((arc) => arc.length > 1 && arc.startsWith('0'))) {
-    return false;
+  if (record.cose !== undefined) {
+    registerUniqueIdentifier(COSE_TO_NAME, 'COSE', record.cose, record.name);
   }
-
-  const firstArc = Number(arcs[0]);
-  if (!Number.isInteger(firstArc) || firstArc < 0 || firstArc > 2) {
-    return false;
-  }
-
-  const secondArc = Number(arcs[1]);
-  if (!Number.isInteger(secondArc)) {
-    return false;
-  }
-
-  if ((firstArc === 0 || firstArc === 1) && (secondArc < 0 || secondArc > 39)) {
-    return false;
-  }
-
-  return true;
 }
 
 export function toOid(name: AlgorithmName): string {
-  try {
-    return OID.fromName(getIdentifierRecord(name).name);
-  } catch {
-    throw new UnknownAlgorithmError(name);
-  }
+  assertAlgorithmNameInput(name);
+  return deriveOidFromName(name);
 }
 
 export function fromOid(oid: string): AlgorithmName {
+  if (typeof oid !== 'string') {
+    throw new InvalidArgumentError('oid', 'Expected OID to be a string.');
+  }
+
   if (!isCanonicalOid(oid)) {
+    throw new InvalidArgumentError(
+      'oid',
+      `Expected canonical dotted OID (for example '2.16.840.1.101.3.4.3.18'), received '${describeUnknownValue(oid)}'.`,
+    );
+  }
+
+  const name = OID_TO_NAME.get(oid);
+  if (name === undefined) {
     throw new UnknownIdentifierError('OID', oid);
   }
 
-  try {
-    const name = OID.toName(oid);
-    getIdentifierRecord(name);
-    return name;
-  } catch {
-    throw new UnknownIdentifierError('OID', oid);
-  }
+  return getIdentifierRecord(name).name;
 }
 
 export function toJose(name: AlgorithmName): JoseIdentifier {
+  assertAlgorithmNameInput(name);
   const record = getIdentifierRecord(name);
   if (record.jose === undefined) {
     throw new UnsupportedMappingError('JOSE', name);
@@ -77,6 +75,10 @@ export function toJose(name: AlgorithmName): JoseIdentifier {
 }
 
 export function fromJose(jose: string): AlgorithmName {
+  if (typeof jose !== 'string') {
+    throw new InvalidArgumentError('jose', 'Expected JOSE identifier to be a string.');
+  }
+
   const name = JOSE_TO_NAME.get(jose as JoseIdentifier);
   if (name === undefined) {
     throw new UnknownIdentifierError('JOSE', jose);
@@ -85,6 +87,7 @@ export function fromJose(jose: string): AlgorithmName {
 }
 
 export function toCose(name: AlgorithmName): CoseIdentifier {
+  assertAlgorithmNameInput(name);
   const record = getIdentifierRecord(name);
   if (record.cose === undefined) {
     throw new UnsupportedMappingError('COSE', name);
@@ -93,8 +96,8 @@ export function toCose(name: AlgorithmName): CoseIdentifier {
 }
 
 export function fromCose(cose: number): AlgorithmName {
-  if (!Number.isFinite(cose) || !Number.isInteger(cose)) {
-    throw new UnknownIdentifierError('COSE', cose);
+  if (typeof cose !== 'number' || !Number.isSafeInteger(cose)) {
+    throw new InvalidArgumentError('cose', 'Expected COSE identifier to be a safe integer.');
   }
 
   const name = COSE_TO_NAME.get(cose as CoseIdentifier);

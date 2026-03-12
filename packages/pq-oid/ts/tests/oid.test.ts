@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { fromName, toName } from '../src/oid';
+import { fromName, isCanonicalOid, toName } from '../src/oid';
 import type { AlgorithmName } from '../src/types';
 
 // Expected OID values from NIST/IETF standards
@@ -131,5 +131,33 @@ describe('toName()', () => {
 
   it('should throw for unknown OID', () => {
     expect(() => toName('1.2.3.4.5.6.7.8.9')).toThrow();
+  });
+});
+
+describe('isCanonicalOid()', () => {
+  it('accepts canonical dotted OIDs', () => {
+    const validOids = ['2.16.840.1.101.3.4.3.18', '0.39', '1.39.0', '2.999999999999999999999'];
+
+    for (const oid of validOids) {
+      expect(isCanonicalOid(oid)).toBe(true);
+    }
+  });
+
+  it('rejects malformed or non-canonical OIDs', () => {
+    const invalidOids = [
+      '',
+      ' 2.16.840.1.101.3.4.3.18',
+      '2.16.840.1.101.3.4.3.18 ',
+      '2..16.840.1.101.3.4.3.18',
+      '2.16.840.1.101.3.4.3.018',
+      '03.16.840.1.101.3.4.3.18',
+      '1.40.3',
+      '+2.16.840.1.101.3.4.3.18',
+      '2.16.840.1.101.3.4.3.a',
+    ];
+
+    for (const oid of invalidOids) {
+      expect(isCanonicalOid(oid)).toBe(false);
+    }
   });
 });

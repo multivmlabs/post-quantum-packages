@@ -77,6 +77,39 @@ export const OID_TO_NAME: Record<string, AlgorithmName> = Object.fromEntries(
   Object.entries(NAME_TO_OID).map(([name, oid]) => [oid, name as AlgorithmName]),
 );
 
+export function isCanonicalOid(oid: string): boolean {
+  if (oid.length === 0 || oid.trim() !== oid) {
+    return false;
+  }
+
+  if (!/^\d+(?:\.\d+)+$/.test(oid)) {
+    return false;
+  }
+
+  const arcs = oid.split('.');
+  if (arcs.some((arc) => arc.length > 1 && arc.startsWith('0'))) {
+    return false;
+  }
+
+  const firstArc = arcs[0];
+  if (firstArc !== '0' && firstArc !== '1' && firstArc !== '2') {
+    return false;
+  }
+
+  const secondArc = arcs[1];
+  if (firstArc === '0' || firstArc === '1') {
+    if (secondArc.length === 1) {
+      return true;
+    }
+
+    if (secondArc.length > 2 || secondArc > '39') {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function fromName(name: AlgorithmName): string {
   const oid = NAME_TO_OID[name];
   if (!oid) {

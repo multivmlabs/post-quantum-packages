@@ -11,16 +11,16 @@ export type MappingTarget = 'OID' | 'JOSE' | 'COSE' | 'X509';
 export type X509ParametersEncoding = 'absent' | 'null';
 
 export interface X509ParametersPolicy {
-  defaultParametersEncoding: X509ParametersEncoding;
-  acceptNull: boolean;
-  acceptAbsent: boolean;
+  readonly defaultParametersEncoding: X509ParametersEncoding;
+  readonly acceptNull: boolean;
+  readonly acceptAbsent: boolean;
 }
 
 export interface IdentifierRecord {
-  name: AlgorithmName;
-  jose?: JoseIdentifier;
-  cose?: CoseIdentifier;
-  x509: X509ParametersPolicy;
+  readonly name: AlgorithmName;
+  readonly jose?: JoseIdentifier;
+  readonly cose?: CoseIdentifier;
+  readonly x509: X509ParametersPolicy;
 }
 
 export type IdentifierRecordMap = Readonly<Record<AlgorithmName, IdentifierRecord>>;
