@@ -51,9 +51,9 @@ OID.fromBytes(bytes)                         // '2.16.840.1.101.3.4.4.1'
 
 // JOSE/COSE mappings (ML-DSA only, compatibility path)
 OID.toJOSE('ML-DSA-65')                     // 'ML-DSA-65'
-OID.toCOSE('ML-DSA-65')                     // -48
+OID.toCOSE('ML-DSA-65')                     // -49
 OID.fromJOSE('ML-DSA-65')                   // 'ML-DSA-65'
-OID.fromCOSE(-48)                           // 'ML-DSA-65'
+OID.fromCOSE(-49)                           // 'ML-DSA-65'
 
 // Algorithm metadata
 Algorithm.get('ML-DSA-65')

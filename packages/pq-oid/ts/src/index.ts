@@ -6,6 +6,7 @@ import { fromJOSE as fromJOSEMapping, toJOSE as toJOSEMapping } from './mappings
 import {
   // Lookup functions
   fromName,
+  isCanonicalOid,
   ML_DSA_44,
   ML_DSA_65,
   ML_DSA_87,
@@ -80,6 +81,7 @@ export const OID = {
   // Name/OID conversion functions
   fromName,
   toName,
+  isCanonicalOid,
 
   // DER encoding/decoding functions
   toBytes: encodeOid,
@@ -97,3 +99,5 @@ export const OID = {
   /** @deprecated Use fromCose() from 'pq-algorithm-id'. */
   fromCOSE,
 };
+
+export { fromName, isCanonicalOid, toName } from './oid';
