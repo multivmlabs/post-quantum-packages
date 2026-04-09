@@ -1,24 +1,45 @@
 {
   "name": "pq-eth-signer",
   "version": "0.0.1",
-  "description": "Ethereum transaction signing with PQ",
+  "description": "Ethereum transaction signing with post-quantum ML-DSA keys",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -b",
+    "test": "bun test",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
     "post-quantum",
     "cryptography",
-    "pqc"
+    "pqc",
+    "ethereum",
+    "ml-dsa",
+    "signing"
   ],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "pq-oid": "^1.0.2",
+    "pq-key-encoder": "^1.0.3",
+    "@noble/post-quantum": "^0.5.2",
+    "@noble/hashes": "^1.7.0"
+  },
   "devDependencies": {
     "typescript": "^5.0.0"
   }

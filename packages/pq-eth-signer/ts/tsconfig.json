@@ -8,7 +8,9 @@
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "composite": true
   },
+  "references": [{ "path": "../../pq-oid/ts" }, { "path": "../../pq-key-encoder/ts" }],
   "include": ["src"]
 }
