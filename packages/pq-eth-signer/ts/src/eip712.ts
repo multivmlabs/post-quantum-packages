@@ -44,7 +44,8 @@ function findTypeDependencies(
   }
   result.add(typeName);
   for (const field of fields) {
-    const baseType = field.type.replace(/\[\d*\]$/, '');
+    // Strip ALL array dimensions before looking up the base type
+    const baseType = field.type.replace(/(\[\d*\])+$/, '');
     if (types[baseType]) {
       findTypeDependencies(baseType, types, result);
     }
@@ -116,6 +117,10 @@ function encodeValue(
 
   if (fieldType.startsWith('bytes')) {
     const bytes = value as Uint8Array;
+    const n = Number(fieldType.slice(5));
+    if (!Number.isNaN(n) && bytes.length > n) {
+      throw new Error(`Value too large for ${fieldType}: got ${bytes.length} bytes, expected \u2264${n}`);
+    }
     result.set(bytes, 0);
     return result;
   }
