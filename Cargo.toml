@@ -40,4 +40,5 @@ members = [
     "packages/pq-bitcoin-taproot/rust",
     "packages/pq-dkim/rust",
     "packages/pq-webauthn/rust",
+    "packages/pq-threshold-seal/rust",
 ]

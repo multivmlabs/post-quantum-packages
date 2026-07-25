@@ -1,0 +1,30 @@
+[package]
+name = "pq-threshold-seal"
+version = "0.0.1"
+edition = "2021"
+rust-version = "1.78"
+description = "Experimental ML-KEM-768 threshold sealing envelopes"
+license = "MIT"
+readme = "README.md"
+keywords = ["post-quantum", "cryptography", "threshold", "ml-kem"]
+categories = ["cryptography", "no-std"]
+
+[features]
+default = ["std"]
+std = ["chacha20poly1305/std", "ml-kem/std", "sha3/std"]
+
+[dependencies]
+chacha20poly1305 = { version = "0.10.1", default-features = false, features = ["alloc"] }
+hybrid-array = "=0.2.0-rc.9"
+kem = "=0.3.0-pre.0"
+ml-kem = { version = "0.2.3", default-features = false, features = ["deterministic"] }
+rand_core = "0.6.4"
+sha3 = { version = "0.10.8", default-features = false }
+zeroize = { version = "1.8.1", default-features = false, features = ["alloc"] }
+
+[dev-dependencies]
+hex = "0.4.3"
+rand_chacha = "0.3.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10.9"
