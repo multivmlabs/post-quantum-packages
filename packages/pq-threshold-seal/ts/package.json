@@ -1,0 +1,43 @@
+{
+  "name": "pq-threshold-seal",
+  "version": "0.0.1",
+  "description": "Experimental ML-KEM-768 threshold sealing envelopes",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "bun test",
+    "prepublishOnly": "npm test && npm run build"
+  },
+  "keywords": [
+    "post-quantum",
+    "cryptography",
+    "threshold",
+    "ml-kem"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "dependencies": {
+    "@noble/ciphers": "^2.2.0",
+    "@noble/hashes": "^2.2.0",
+    "@noble/post-quantum": "^0.6.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
